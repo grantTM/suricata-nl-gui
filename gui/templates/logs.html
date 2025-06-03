@@ -1,43 +1,109 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Suricata Alert Logs</title>
-    <style>
+    <title>Suricata Alerts</title>
+    <style id="theme-style">
+        :root {
+            --bg: #121212;
+            --text: #eee;
+            --input-bg: #1e1e1e;
+            --input-text: #fff;
+            --button-bg: #444;
+            --button-text: #fff;
+            --alert-color: red;
+        }
+
         body {
             font-family: Arial, sans-serif;
-            padding: 2rem;
-            background-color: #f9f9f9;
-            color: #111;
+            margin: 2rem;
+            background: var(--bg);
+            color: var(--text);
         }
-        h1 {
-            color: #333;
-        }
-        .log-entry {
-            background-color: #fff;
-            border: 1px solid #ccc;
+
+        .alert-entry {
+            background: var(--input-bg);
             padding: 1rem;
             margin-bottom: 1rem;
+            border-left: 4px solid var(--alert-color);
             border-radius: 5px;
-            box-shadow: 1px 1px 4px rgba(0,0,0,0.05);
+            white-space: pre-wrap;
         }
-        .back-link {
-            margin-bottom: 2rem;
+
+        .theme-switch-wrapper {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 1rem;
+        }
+
+        .theme-switch {
+            position: relative;
             display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .theme-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            background-color: #888;
+            border-radius: 34px;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            transition: 0.4s;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "🌗";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 3px;
+            background-color: white;
+            border-radius: 50%;
+            transition: 0.4s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        input:checked + .slider {
+            background-color: #444;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+            content: "☀️";
+        }
+
+        .nav-link {
+            float: right;
+            margin-right: 1rem;
         }
     </style>
 </head>
 <body>
-    <a href="/" class="back-link">⬅ Back to Rule Translator</a>
-    <h1>🧠 Suricata Alerts</h1>
+    {% include 'theme.html' %}
+    <a href="/" class="nav-link">← Back to Translator</a>
+    <h1>📋 Recent Suricata Alerts</h1>
 
     {% if alerts %}
         {% for alert in alerts %}
-            <div class="log-entry">
-                <strong>Timestamp:</strong> {{ alert.timestamp }}<br>
-                <strong>Source IP:</strong> {{ alert.src_ip }}<br>
-                <strong>Destination IP:</strong> {{ alert.dest_ip }}<br>
-                <strong>Protocol:</strong> {{ alert.proto }}<br>
-                <strong>Alert:</strong> {{ alert.alert.signature }}
+            <div class="alert-entry">
+                <strong>Timestamp:</strong> {{ alert.timestamp or 'N/A' }}<br>
+                <strong>Source IP:</strong> {{ alert.src_ip or 'N/A' }}<br>
+                <strong>Destination IP:</strong> {{ alert.dest_ip or 'N/A' }}<br>
+                <strong>Protocol:</strong> {{ alert.proto or 'N/A' }}<br>
+                <strong>Alert:</strong> {{ alert.alert.signature if alert.alert else 'No signature' }}
             </div>
         {% endfor %}
     {% else %}

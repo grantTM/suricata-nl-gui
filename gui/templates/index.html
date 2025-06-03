@@ -108,15 +108,16 @@
             transform: translateX(26px);
             content: "☀️";
         }
+
+        .nav-link {
+            float: right;
+            margin-right: 1rem;
+        }
     </style>
 </head>
 <body>
-    <div class="theme-switch-wrapper">
-        <label class="theme-switch">
-            <input type="checkbox" id="theme-toggle" />
-            <span class="slider"></span>
-        </label>
-    </div>
+    {% include 'theme.html' %}
+    <a href="/logs" class="nav-link">📋 View Logs</a>
 
     <h1>🛡 Natural Language Rule Translator</h1>
     <form method="post">
@@ -133,49 +134,5 @@
         <h3>🧾 Translated Suricata Rule:</h3>
         <div class="result">{{ rule }}</div>
     {% endif %}
-
-    <script>
-        const toggle = document.getElementById('theme-toggle');
-        const style = document.getElementById('theme-style');
-
-        function applyLightMode() {
-            style.innerHTML = style.innerHTML.replace(
-                /:root\s*{[^}]+}/,
-                `:root {
-                    --bg: #ffffff;
-                    --text: #111111;
-                    --input-bg: #f9f9f9;
-                    --input-text: #000000;
-                    --button-bg: #dddddd;
-                    --button-text: #000000;
-                    --alert-color: #cc0000;
-                }`
-            );
-            localStorage.setItem('theme', 'light');
-            toggle.checked = true;
-        }
-          
-        function applyDarkMode() {
-            location.reload();  // Reload to reset to default styles
-            localStorage.setItem('theme', 'dark');
-        }
-          
-        toggle.addEventListener('change', function () {
-            if (toggle.checked) {
-                applyLightMode();
-            } else {
-                applyDarkMode();
-            }
-        });
-          
-        // 🧠 On page load, apply the saved theme if present
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme === 'light') {
-            applyLightMode();
-        } else {
-            toggle.checked = false; // ensure toggle is in correct state
-        }
-    </script>
-
 </body>
 </html>
