@@ -1,65 +1,99 @@
-<script>
-    const toggle = document.getElementById('toggleTheme');
-    const style = document.getElementById('theme-style');
-
-    toggle.addEventListener('change', function () {
-        if (toggle.checked) {
-            // Light mode (clean white)
-            style.innerHTML = `
-                :root {
-                    --bg: #ffffff;
-                    --text: #111111;
-                    --input-bg: #f9f9f9;
-                    --input-text: #000000;
-                    --button-bg: #dddddd;
-                    --button-text: #000000;
-                    --alert-color: #cc0000;
-                }
-
-                body {
-                    font-family: Arial, sans-serif;
-                    margin: 2rem;
-                    background: var(--bg);
-                    color: var(--text);
-                }
-
-                input, textarea {
-                    width: 100%;
-                    padding: 10px;
-                    margin: 10px 0;
-                    background: var(--input-bg);
-                    color: var(--input-text);
-                    border: 1px solid #aaa;
-                }
-
-                button {
-                    padding: 10px 20px;
-                    background: var(--button-bg);
-                    color: var(--button-text);
-                    border: none;
-                    cursor: pointer;
-                }
-
-                .alert {
-                    color: var(--alert-color);
-                }
-
-                .result {
-                    background: var(--input-bg);
-                    padding: 10px;
-                    border-radius: 5px;
-                    white-space: pre-wrap;
-                    border: 1px solid #ccc;
-                }
-
-                .theme-toggle {
-                    float: right;
-                    margin-top: -2rem;
-                }
-            `;
-        } else {
-            // Reload to restore dark mode
-            location.reload();
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Rule Translator</title>
+    <style id="theme-style">
+        :root {
+            --bg: #121212;
+            --text: #eee;
+            --input-bg: #1e1e1e;
+            --input-text: #fff;
+            --button-bg: #444;
+            --button-text: #fff;
+            --alert-color: red;
         }
-    });
-</script>
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 2rem;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            background: var(--input-bg);
+            color: var(--input-text);
+            border: 1px solid #888;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: var(--button-bg);
+            color: var(--button-text);
+            border: none;
+            cursor: pointer;
+        }
+
+        .alert {
+            color: var(--alert-color);
+        }
+
+        .result {
+            background: var(--input-bg);
+            padding: 10px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+        }
+
+        .theme-toggle {
+            float: right;
+            margin-top: -2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="theme-toggle">
+        <label>
+            <input type="checkbox" id="toggleTheme"> Light Mode
+        </label>
+    </div>
+
+    <h1>🛡 Natural Language Rule Translator</h1>
+    <form method="post">
+        <label for="nl_rule">Enter detection rule in plain English:</label>
+        <input type="text" name="nl_rule" required>
+        <button type="submit">Translate</button>
+    </form>
+
+    {% if alert %}
+        <div class="alert">{{ alert }}</div>
+    {% endif %}
+
+    {% if rule %}
+        <h3>🧾 Translated Suricata Rule:</h3>
+        <div class="result">{{ rule }}</div>
+    {% endif %}
+
+    <script>
+        const toggle = document.getElementById('toggleTheme');
+        const style = document.getElementById('theme-style');
+
+        toggle.addEventListener('change', function () {
+            if (toggle.checked) {
+                // Light mode
+                style.innerHTML = style.innerHTML.replace(/#121212/g, "#ffffff")
+                                                 .replace(/#eee/g, "#000")
+                                                 .replace(/#1e1e1e/g, "#f0f0f0")
+                                                 .replace(/#444/g, "#ddd")
+                                                 .replace(/#fff/g, "#000");
+            } else {
+                // Reload the page to reset to default dark mode
+                location.reload();
+            }
+        });
+    </script>
+</body>
+</html>
