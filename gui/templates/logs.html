@@ -27,7 +27,7 @@
             margin-bottom: 1.5rem;
             border-radius: 5px;
         }
-        
+
         .summary ul {
             margin: 0.5rem 0 0 1rem;
         }
@@ -122,7 +122,7 @@
     {% if alerts %}
         {% for alert in alerts %}
             <div class="alert-entry">
-                <strong>Timestamp:</strong> {{ alert.timestamp or 'N/A' }}<br>
+                <strong>Timestamp:</strong> {{ alert.local_time or alert.timestamp or 'N/A' }}<br>
                 <strong>Source IP:</strong> {{ alert.src_ip or 'N/A' }}<br>
                 <strong>Destination IP:</strong> {{ alert.dest_ip or 'N/A' }}<br>
                 <strong>Protocol:</strong> {{ alert.proto or 'N/A' }}<br>

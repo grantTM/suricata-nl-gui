@@ -3,6 +3,8 @@ from flask import Flask, render_template, request
 import sys
 import os
 from collections import Counter
+from datetime import datetime
+import pytz
 
 sys.path.append("../scripts")  # So we can import rule logic
 from rule_translator import translate_to_suricata, get_next_sid, RULES_FILE, save_rule_to_file
@@ -49,7 +51,30 @@ def view_logs():
 
     # Show only the most recent 20 alerts in descending order
     alerts = alerts[-20:][::-1]
-    
+
+    # Convert UTC to local time (e.g., Central Time)
+    local_tz = pytz.timezone("America/Chicago")
+
+    for entry in alerts:
+        ts = entry.get("timestamp")
+        if ts:
+            try:
+                # Try with microseconds first
+                utc_time = datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%f%z")
+                entry["local_time"] = utc_time.astimezone(local_tz).strftime("%Y-%m-%d %I:%M:%S %p %Z")
+            except ValueError:
+                try:
+                    # Fallback: no microseconds
+                    utc_time = datetime.strptime(ts, "%Y-%m-%dT%H:%M:%SZ")
+                except ValueError:
+                    utc_time = None
+
+            if utc_time:
+                entry["local_time"] = utc_time.replace(tzinfo=pytz.utc).astimezone(local_tz).strftime(
+                    "%Y-%m-%d %I:%M:%S %p %Z")
+            else:
+                entry["local_time"] = ts  # fallback
+
     # Summary statistics
     total_alerts = len(alerts)
     signatures = Counter(entry["alert"]["signature"] for entry in alerts if "alert" in entry)
