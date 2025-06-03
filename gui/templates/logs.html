@@ -20,6 +20,18 @@
             color: var(--text);
         }
 
+        .summary {
+            background: var(--input-bg);
+            padding: 1rem;
+            border: 1px solid #666;
+            margin-bottom: 1.5rem;
+            border-radius: 5px;
+        }
+        
+        .summary ul {
+            margin: 0.5rem 0 0 1rem;
+        }
+
         .alert-entry {
             background: var(--input-bg);
             padding: 1rem;
@@ -96,6 +108,17 @@
     <a href="/" class="nav-link">← Back to Translator</a>
     <h1>📋 Recent Suricata Alerts</h1>
 
+    <div class="summary">
+        <p><strong>Total Alerts:</strong> {{ total_alerts }}</p>
+        <p><strong>Most Common Source IP:</strong> {{ top_source }}</p>
+        <p><strong>Top Signatures:</strong></p>
+        <ul>
+            {% for sig, count in top_signatures %}
+                <li>{{ sig }} ({{ count }})</li>
+            {% endfor %}
+        </ul>
+    </div>
+
     {% if alerts %}
         {% for alert in alerts %}
             <div class="alert-entry">
@@ -109,5 +132,12 @@
     {% else %}
         <p>No alerts found in eve.json.</p>
     {% endif %}
+
+    <script>
+        // Refresh the page every 10 seconds
+        setTimeout(() => {
+            window.location.reload();
+        }, 10000); // 10,000 milliseconds = 10 seconds
+    </script>
 </body>
 </html>
