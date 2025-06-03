@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+
+# Flask/Suricata project
+*.log
+*.pid
+*.json
+*.db
+rules/my.rules
+
+# VS Code
+.vscode/
