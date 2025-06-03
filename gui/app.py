@@ -46,8 +46,8 @@ def view_logs():
         except Exception as e:
             alerts = [{"timestamp": "N/A", "src_ip": "N/A", "dest_ip": "N/A", "proto": "N/A", "alert": {"signature": f"Error reading eve.json: {e}"}}]
 
-    # Show only the most recent 20 alerts
-    alerts = alerts[-20:]
+    # Show only the most recent 20 alerts in descending order
+    alerts = alerts[-20:][::-1]
     return render_template("logs.html", alerts=alerts)
                         
 
