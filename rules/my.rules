@@ -1,0 +1,1 @@
+alert icmp any any -> any any (msg:"ICMP traffic detected"; sid:1000003; rev:1;)
