@@ -138,25 +138,44 @@
         const toggle = document.getElementById('theme-toggle');
         const style = document.getElementById('theme-style');
 
+        function applyLightMode() {
+            style.innerHTML = style.innerHTML.replace(
+                /:root\s*{[^}]+}/,
+                `:root {
+                    --bg: #ffffff;
+                    --text: #111111;
+                    --input-bg: #f9f9f9;
+                    --input-text: #000000;
+                    --button-bg: #dddddd;
+                    --button-text: #000000;
+                    --alert-color: #cc0000;
+                }`
+            );
+            localStorage.setItem('theme', 'light');
+            toggle.checked = true;
+        }
+          
+        function applyDarkMode() {
+            location.reload();  // Reload to reset to default styles
+            localStorage.setItem('theme', 'dark');
+        }
+          
         toggle.addEventListener('change', function () {
             if (toggle.checked) {
-                // Light mode
-                style.innerHTML = style.innerHTML.replace(
-                    /:root\s*{[^}]+}/,
-                    `:root {
-                        --bg: #ffffff;
-                        --text: #111111;
-                        --input-bg: #f9f9f9;
-                        --input-text: #000000;
-                        --button-bg: #dddddd;
-                        --button-text: #000000;
-                        --alert-color: #cc0000;
-                    }`
-                );
+                applyLightMode();
             } else {
-                location.reload();  // Reset to dark mode
+                applyDarkMode();
             }
         });
+          
+        // 🧠 On page load, apply the saved theme if present
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light') {
+            applyLightMode();
+        } else {
+            toggle.checked = false; // ensure toggle is in correct state
+        }
     </script>
+
 </body>
 </html>
