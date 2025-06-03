@@ -8,7 +8,7 @@ from rule_translator import translate_to_suricata, get_next_sid, RULES_FILE, sav
 
 app = Flask(__name__)
 
-EVE_LOG_PATH = os.path.expanduser("~/suricata_nl_gui/logs/eve.json")
+EVE_LOG_PATH = "/var/log/suricata/eve.json"
 
 @app.route("/", methods=["GET", "POST"])
 def index():
