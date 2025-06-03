@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Suricata Alert Logs</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 2rem;
+            background-color: #f9f9f9;
+            color: #111;
+        }
+        h1 {
+            color: #333;
+        }
+        .log-entry {
+            background-color: #fff;
+            border: 1px solid #ccc;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 5px;
+            box-shadow: 1px 1px 4px rgba(0,0,0,0.05);
+        }
+        .back-link {
+            margin-bottom: 2rem;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-link">⬅ Back to Rule Translator</a>
+    <h1>🧠 Suricata Alerts</h1>
+
+    {% if alerts %}
+        {% for alert in alerts %}
+            <div class="log-entry">
+                <strong>Timestamp:</strong> {{ alert.timestamp }}<br>
+                <strong>Source IP:</strong> {{ alert.src_ip }}<br>
+                <strong>Destination IP:</strong> {{ alert.dest_ip }}<br>
+                <strong>Protocol:</strong> {{ alert.proto }}<br>
+                <strong>Alert:</strong> {{ alert.alert.signature }}
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No alerts found in eve.json.</p>
+    {% endif %}
+</body>
+</html>
