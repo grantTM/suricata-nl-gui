@@ -2,7 +2,7 @@ import re
 import os
 
 RULES_FILE = os.path.expanduser("~/suricata_nl_gui/rules/my.rules")
-SID_START = 1000003 # Starting SID range for custom rules
+SID_START = 1000001 # Starting SID range for custom rules
 
 def get_next_sid(filepath):
     if not os.path.exists(filepath):
