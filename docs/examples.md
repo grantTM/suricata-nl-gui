@@ -10,7 +10,6 @@ This page shows how plain-English input gets translated into Suricata rules usin
 A Suricata rule generally looks like this:
 
 ```suricata
-
 alert tcp any any -> $HOME_NET 22 (msg:"SSH Connection"; sid:1000001; rev:1;)
 ```
 
