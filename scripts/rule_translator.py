@@ -30,6 +30,9 @@ def translate_to_suricata(nl_input, sid):
     elif "port scan" in nl_input:
         return f'alert ip any any -> any any (msg:"Potential port scan detected"; threshold:type both, track by_src, count 20, seconds 5; sid:{sid}; rev:1;)'
 
+    elif "brute force" in nl_input and "ssh" in nl_input:
+        return f'alert tcp any any -> any 22 (msg:"Possible SSH brute force attempt"; flags:S; threshold:type both, track by_src, count 2, seconds 30; sid:{sid}; rev:1;)'
+
     else:
         return None
 
