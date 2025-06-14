@@ -19,7 +19,7 @@ alert tcp any any -> $HOME_NET 22 (msg:"SSH Connection"; sid:1000001; rev:1;)
 | `tcp`				| The protocol to inspect (`tcp` ,`udp` ,`icmp`, etc.			|
 | `any any -> $HOME_NET 22`	| Traffic from anywhere to port 22 in your network			|
 | `msg`				| A human-readable message attached to the alert			|
-| `sid`				| Unique signature ID (you addign these; best to start > 1,000,000)	|
+| `sid`				| Unique signature ID (you assign these; best to start > 1,000,000)	|
 | `rev`				| Revision number of the rule (for versioning)				|
 
 Additional options like `flow`, `threshold`, `dsize`, `content`, and `itype` refine what traffic matches.
@@ -40,8 +40,6 @@ alert tcp any any -> any 22 (msg:"Potential SSH brute force login attempt"; flow
 **Explanation:**
 Triggers if 5 or more login attempts are made over SSH (port 22) to a server within 60 seconds
 
----
-
 ### 2. SSH from External IP
 
 **Input:**
@@ -54,8 +52,6 @@ alert tcp !$HOME_NET any -> $HOME_NET 22 (msg:"External SSH connection attempt";
 
 **Explanation:**
 Detects incoming SSH traffic from outside your network
-
----
 
 ### 3. Suspicious DNS Lookup
 
@@ -70,8 +66,6 @@ alert udp any any -> any 53 (msg:"Suspicious DNS Query"; content:".xyz"; nocase;
 **Explanation**
 Flags DNS requests that include ".xyz" --- often used in malicious domains. Content can be modified by editing the rule after generation
 
----
-
 ### 4. Web Server Access Flood
 
 **Input:**
@@ -85,8 +79,6 @@ alert tcp any any -> $HOME_NET 80 (msg:"Web server access flood"; flow:to_server
 **Explanation:**
 Helps detect early signs of a DDoS attack or aggressive scanning behavior
 
----
-
 ### 5. File Exfiltration Attempt
 
 **Input:**
@@ -99,8 +91,6 @@ alert tcp $HOME_NET any -> !$HOME_NET any (msg:"Possible file exfiltration"; flo
 
 **Explanation:**
 Detects large data transfers originating from hosts to external destinations
-
----
 
 ### 6. ICMP Ping Sweep
 
@@ -123,7 +113,8 @@ Flags basic ICMP echo request commonly used to map active hosts.
 - All generated rules are stored in `rules/my.rules`
 - Advanced users can manually edit the file for fine-tuning/implementation of [flowbit logic](https://docs.suricata.io/en/latest/rules/flow-keywords.html)
 
+---
+
 # Want to Contribute?
 
 Send suggestions or rule ideas to the project maintainer or open an issue on GitHub
-
