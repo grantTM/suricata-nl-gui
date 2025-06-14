@@ -15,8 +15,6 @@ The tool uses [Suricata](https://suricata.io) as the detection engine and includ
 
 ## Features
 
----
-
 - Alert viewer (auto-refresh, top IP summary, local timestamps)
 - Natural language rule creation (e.g. "alert on SSH from outside IP")
 - Editable rule thresholds and preview before saving
