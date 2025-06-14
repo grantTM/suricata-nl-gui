@@ -62,7 +62,7 @@ Detects incoming SSH traffic from outside your network
 `detect DNS lookups to strange domains`
 
 **Generated Rule:**
-`alert udp any any -> any 53 (msg:"Suspicious DNS Query"; content:".xyz"; nocase; sid:1000003; rev:1;)`
+```alert udp any any -> any 53 (msg:"Suspicious DNS Query"; content:".xyz"; nocase; sid:1000003; rev:1;)```
 
 **Explanation**
 Flags DNS requests that include ".xyz" --- often used in malicious domains. Content can be modified by editing the rule after generation
@@ -75,7 +75,7 @@ Flags DNS requests that include ".xyz" --- often used in malicious domains. Cont
 `alert on more than 10 requests to web server in 30 seconds`
 
 **Generated Rule:**
-`alert tcp any any -> $HOME_NET 80 (msg:"Web server access flood"; flow:to_server,established; threshold:type both, track_by_src, count 10, seconds 30; sid:1000004; rev:1;)`
+```alert tcp any any -> $HOME_NET 80 (msg:"Web server access flood"; flow:to_server,established; threshold:type both, track_by_src, count 10, seconds 30; sid:1000004; rev:1;)```
 
 **Explanation:**
 Helps detect early signs of a DDoS attack or aggressive scanning behavior
@@ -88,7 +88,7 @@ Helps detect early signs of a DDoS attack or aggressive scanning behavior
 `alert on large outbound file transfers`
 
 **Generated Rule:**
-`alert tcp $HOME_NET any -> !$HOME_NET any (msg:"Possible file exfiltration"; flow:to_server,established; dsize:>1000; sid:1000005; rev:1;)`
+```alert tcp $HOME_NET any -> !$HOME_NET any (msg:"Possible file exfiltration"; flow:to_server,established; dsize:>1000; sid:1000005; rev:1;)```
 
 **Explanation:**
 Detects large data transfers originating from hosts to external destinations
@@ -101,10 +101,12 @@ Detects large data transfers originating from hosts to external destinations
 `detect ping sweep`
 
 **Generated Rule:**
-`alert icmp any any -> any any (msg:"Ping sweep detected"; itype:8; sid:1000006; rev:1;)`
+```alert icmp any any -> any any (msg:"Ping sweep detected"; itype:8; sid:1000006; rev:1;)```
+
+**Explanation:**
+Flags basic ICMP echo request commonly used to map active hosts.
 
 ---
-
 
 # Tips
 
