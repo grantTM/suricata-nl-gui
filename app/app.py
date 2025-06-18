@@ -117,7 +117,7 @@ def view_logs():
                         
 @app.route("/download_alerts")
 def download_alerts():
-    alerts = get_recent_alerts
+    alerts = get_recent_alerts()
 
     output = io.StringIO()
     writer = csv.writer(output)
@@ -137,7 +137,7 @@ def download_alerts():
     filename = f"alerts_{timestamp}.csv"
 
     response = make_response(output.getvalue())
-    response.headers["Content-Disposition"] = "attachment; filename=alerts.csv"
+    response.headers["Content-Disposition"] = f"attachment; filename={filename}"
     response.headers["Content-type"] = "text/csv"
     return response
 
