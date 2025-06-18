@@ -1,5 +1,7 @@
 import json
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, make_response
+import csv
+import io
 import sys
 import os
 from collections import Counter
@@ -109,6 +111,28 @@ def view_logs():
                         low_count=low_count,
                         latest_alert_time=latest_alert_time)
                         
+@app.route("/download_alerts")
+def download_alerts():
+    alerts = view_logs().kwargs["alerts"] if hasattr(view_logs(), 'kwargs') else []
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Timestamp", "Source IP", "Destination IP", "Protocol", "Alert", "Severity"])
+
+    for a in alerts:
+        writer.writerow([
+            a.get("local_time") or a.get("timestamp"),
+            a.get("src_ip", "N/A"),
+            a.get("dest_ip", "N/A"),
+            a.get("proto", "N/A"),
+            a.get("alert", {}).get("signature", "N/A"),
+            a.get("severity", "N/A")
+        ])
+
+    response = make_response(output.getvalue())
+    response.headers["Content-Disposition"] = "attachment; filename=alerts.csv"
+    response.headers["Content-type"] = "text/csv"
+    return response
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=5000)

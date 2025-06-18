@@ -20,7 +20,7 @@
             color: var(--text);
         }
 
-        .content-weapper {
+        .content-wrapper {
             max-width: 800px;
             margin: 0 auto;
         }
@@ -145,7 +145,15 @@
             </ul>
         </div>
 
-        <input type=""text" id="searchInput" name="search" placeholder="Search alerts..." onkeyup="filterAlerts(); saveSearch()" style="width: 100%; padding: 0.5rem; margin-bottom: 1rem; border-radius: 5px; border: 1px solid #444; background: var(--input-bg); color: var(--input-text);">
+        <input 
+            type="text" 
+            id="searchInput" 
+            name="search" 
+            placeholder="Search alerts..." 
+            onkeyup="filterAlerts(); saveSearch()" 
+            style="width: 100%; box-sizing: border-box; padding: 1rem; margin-bottom: 1rem; border-radius: 5px; border: 1px solid #444; background: var(--input-bg); color: var(--input-text);">
+        
+        <a href="/download_alerts" style="display: inline-block; padding: 0.5rem 1rem; margin-bottom: 1rem; background-color: #444; color: white; text-decoration: none; border-radius: 5px;"
 
         {% if alerts %}
             {% for alert in alerts %}
