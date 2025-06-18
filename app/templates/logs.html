@@ -179,11 +179,18 @@
         }
 
         function loadSearch() {
+            const input = document.getElementById("searchInput");
             const saved = localStorage.getItem("suricataSearch");
+            
             if (saved) {
-                const input = document.getElementById("searchInput");
                 input.value = saved;
                 filterAlerts(); // Re-filter after setting input
+            }
+
+            // Put cursor at the end and focus if user had previously typed something
+            if (saved && saved.length > 0) {
+                input.focus();
+                input.setSelectionRange(input.value.length, input.value.length);
             }
         }
 
