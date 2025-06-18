@@ -37,6 +37,11 @@
             cursor: pointer;
         }
 
+        .content-wrapper {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
         .alert {
             color: var(--alert-color);
         }
@@ -116,15 +121,18 @@
     </style>
 </head>
 <body>
-    {% include 'theme.html' %}
-    <a href="/logs" class="nav-link">📋 View Logs</a>
+    <div class="content-wrapper">
+        {% include 'theme.html' %}
+        <a href="/logs" class="nav-link">View Logs</a>
+        <a href="/rules" class="nav-link">View Rules</a>
 
-    <h1>🛡 Natural Language Rule Translator</h1>
-    <form method="post">
-        <label for="nl_rule">Enter detection rule in plain English:</label>
-        <input type="text" name="nl_rule" required>
-        <button type="submit">Translate</button>
-    </form>
+        <h1>🛡 Natural Language Rule Translator</h1>
+        <form method="post">
+            <label for="nl_rule">Enter detection rule in plain English:</label>
+            <input type="text" name="nl_rule" required>
+            <button type="submit">Translate</button>
+        </form>
+    </div>
 
     {% if alert %}
         <div class="alert">{{ alert }}</div>
