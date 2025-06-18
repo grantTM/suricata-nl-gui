@@ -139,7 +139,7 @@
         </ul>
     </div>
 
-    <input type=""text" id="searchInput" placeholder="Search alerts..." onkeyup="filterAlerts()" style="width: 100%; padding: 0.5rem; margin-bottom: 1rem; border-radius: 5px; border: 1px solid #444; background: var(--input-bg); color: var(--input-text);">
+    <input type=""text" id="searchInput" name="search" placeholder="Search alerts..." onkeyup="filterAlerts(); saveSearch()" style="width: 100%; padding: 0.5rem; margin-bottom: 1rem; border-radius: 5px; border: 1px solid #444; background: var(--input-bg); color: var(--input-text);">
 
     {% if alerts %}
         {% for alert in alerts %}
@@ -159,7 +159,8 @@
     <script>
         // Refresh the page every 10 seconds
         setTimeout(() => {
-            window.location.reload();
+            saveSearch();
+            location.reload();
         }, 10000); // 10,000 milliseconds = 10 seconds
 
         function filterAlerts() {
@@ -171,6 +172,24 @@
                 alert.style.display = text.includes(input) ? "" : "none";
             })
         }
+
+        function saveSearch() {
+            const value = document.getElementById("searchInput").value;
+            localStorage.setItem("suricataSearch", value);
+        }
+
+        function loadSearch() {
+            const saved = localStorage.getItem("suricataSearch");
+            if (saved) {
+                const input = document.getElementById("searchInput");
+                input.value = saved;
+                filterAlerts(); // Re-filter after setting input
+            }
+        }
+
+        window.onload = function () {
+            loadSearch();
+        };
     </script>
 </body>
 </html>
