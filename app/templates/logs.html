@@ -101,6 +101,19 @@
             float: right;
             margin-right: 1rem;
         }
+
+        /* Severity color overlays */
+        .severity-high {
+            border-left-color: #c0392b !important;
+        }
+
+        .severity-medium {
+            border-left-color: #f39c12 !important;
+        }
+
+        .severity-low {
+            border-left-color: #27ae60 !important;
+        }
     </style>
 </head>
 <body>
@@ -121,12 +134,13 @@
 
     {% if alerts %}
         {% for alert in alerts %}
-            <div class="alert-entry">
+            <div class="alert-entry" severity-{{ alert.severity|lower }}>
                 <strong>Timestamp:</strong> {{ alert.local_time or alert.timestamp or 'N/A' }}<br>
                 <strong>Source IP:</strong> {{ alert.src_ip or 'N/A' }}<br>
                 <strong>Destination IP:</strong> {{ alert.dest_ip or 'N/A' }}<br>
                 <strong>Protocol:</strong> {{ alert.proto or 'N/A' }}<br>
                 <strong>Alert:</strong> {{ alert.alert.signature if alert.alert else 'No signature' }}
+                <strong>Severity:</strong> {{ alert.severity }}
             </div>
         {% endfor %}
     {% else %}

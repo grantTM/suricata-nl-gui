@@ -13,6 +13,15 @@ app = Flask(__name__)
 
 EVE_LOG_PATH = "/var/log/suricata/eve.json"
 
+def map_severity(msg):
+    msg = msg.lower()
+    if "brute force" in msg or "exfiltration" in msg:
+        return "High"
+    elif "scan" in msg or "dns" in msg:
+        return "Medium"
+    else:
+        return "Low"
+
 @app.route("/", methods=["GET", "POST"])
 def index():
     generated_rule = None
@@ -54,8 +63,11 @@ def view_logs():
 
     # Convert UTC to local time (e.g., Central Time)
     local_tz = pytz.timezone("America/Chicago")
-
+    
     for entry in alerts:
+        msg = entry.get("alert", {}).get("signature", "")
+        entry["severity"] = map_severity(msg)
+        
         ts = entry.get("timestamp")
         if ts:
             try:
