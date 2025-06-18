@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Current Suricata Rules</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background-color: #121212;
+                color: #eee;
+                padding: 2rem;
+            }
+
+            .container {
+                max-width: 900px;
+                margin: 0 auto;
+            }
+
+            pre {
+                background-color: #1e1e1e;
+                color: #fff;
+                padding: 1rem;
+                border-radius: 5px;
+                white-space: pre-wrap;
+            }
+
+            a.nav-link {
+                float: right;
+                color: #ccc;
+                text-decoration: none;
+                margin-bottom: 1rem;
+            }
+
+            a.nav-link:hover {
+                text-decoration: underline;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <a href="/" class="nav-link">Back to Translator</a>
+            <h1>Current Suricata Rules</h1>
+            <pre>{{ rules }}</pre>
+        </div>
+    </body>
+</html>
