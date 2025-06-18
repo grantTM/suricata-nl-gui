@@ -12,12 +12,17 @@
             --button-text: #fff;
             --alert-color: red;
         }
-
+        
         body {
             font-family: Arial, sans-serif;
             margin: 2rem;
             background: var(--bg);
             color: var(--text);
+        }
+
+        .content-weapper {
+            max-width: 800px;
+            margin: 0 auto;
         }
 
         .summary {
@@ -117,86 +122,88 @@
     </style>
 </head>
 <body>
-    {% include 'theme.html' %}
-    <a href="/" class="nav-link">← Back to Translator</a>
-    <h1>📋 Recent Suricata Alerts</h1>
+    <div class="content-wrapper">
+        {% include 'theme.html' %}
+        <a href="/" class="nav-link">← Back to Translator</a>
+        <h1>Recent Suricata Alerts</h1>
 
-    <div class="summary">
-        <p><strong>Total Alerts:</strong> {{ total_alerts }}</p>
-        <p><strong>Most Common Source IP:</strong> {{ top_source }}</p>
-        <p><strong>Top Signatures:</strong></p>
-        <ul>
-            {% for sig, count in top_signatures %}
-                <li>{{ sig }} ({{ count }})</li>
+        <div class="summary">
+            <p><strong>Total Alerts:</strong> {{ total_alerts }}</p>
+            <p><strong>Most Common Source IP:</strong> {{ top_source }}</p>
+            <p><strong>Top Signatures:</strong></p>
+            <ul>
+                {% for sig, count in top_signatures %}
+                    <li>{{ sig }} ({{ count }})</li>
+                {% endfor %}
+            </ul>
+            <p><strong>Most Recent Alert:</strong> {{ latest_alert_time }}</p>
+            <p><strong>Severity Breakdown:</strong></p>
+            <ul>
+                <li><span style="color:#c0392b;">High:</span> {{ high_count }}</li>
+                <li><span style="color:#f39c12;">Medium:</span> {{ medium_count }}</li>
+                <li><span style="color:#27ae60;">Low:</span> {{ low_count }}</li>
+            </ul>
+        </div>
+
+        <input type=""text" id="searchInput" name="search" placeholder="Search alerts..." onkeyup="filterAlerts(); saveSearch()" style="width: 100%; padding: 0.5rem; margin-bottom: 1rem; border-radius: 5px; border: 1px solid #444; background: var(--input-bg); color: var(--input-text);">
+
+        {% if alerts %}
+            {% for alert in alerts %}
+                <div class="alert-entry severity-{{ alert.severity|lower }}">
+                    <strong>Timestamp:</strong> {{ alert.local_time or alert.timestamp or 'N/A' }}<br>
+                    <strong>Source IP:</strong> {{ alert.src_ip or 'N/A' }}<br>
+                    <strong>Destination IP:</strong> {{ alert.dest_ip or 'N/A' }}<br>
+                    <strong>Protocol:</strong> {{ alert.proto or 'N/A' }}<br>
+                    <strong>Alert:</strong> {{ alert.alert.signature if alert.alert else 'No signature' }}<br>
+                    <strong>Severity:</strong> {{ alert.severity }}
+                </div>
             {% endfor %}
-        </ul>
-        <p><strong>Most Recent Alert:</strong> {{ latest_alert_time }}</p>
-        <p><strong>Severity Breakdown:</strong></p>
-        <ul>
-            <li><span style="color:#c0392b;">High:</span> {{ high_count }}</li>
-            <li><span style="color:#f39c12;">Medium:</span> {{ medium_count }}</li>
-            <li><span style="color:#27ae60;">Low:</span> {{ low_count }}</li>
-        </ul>
+        {% else %}
+            <p>No alerts found in eve.json.</p>
+        {% endif %}
+
+        <script>
+            // Refresh the page every 10 seconds
+            setTimeout(() => {
+                saveSearch();
+                location.reload();
+            }, 10000); // 10,000 milliseconds = 10 seconds
+
+            function filterAlerts() {
+                const input = document.getElementById("searchInput").value.toLowerCase();
+                const alerts = document.querySelectorAll(".alert-entry");
+
+                alerts.forEach(alert => {
+                    const text = alert.innerText.toLowerCase();
+                    alert.style.display = text.includes(input) ? "" : "none";
+                })
+            }
+
+            function saveSearch() {
+                const value = document.getElementById("searchInput").value;
+                localStorage.setItem("suricataSearch", value);
+            }
+
+            function loadSearch() {
+                const input = document.getElementById("searchInput");
+                const saved = localStorage.getItem("suricataSearch");
+
+                if (saved) {
+                    input.value = saved;
+                    filterAlerts(); // Re-filter after setting input
+                }
+
+                // Put cursor at the end and focus if user had previously typed something
+                if (saved && saved.length > 0) {
+                    input.focus();
+                    input.setSelectionRange(input.value.length, input.value.length);
+                }
+            }
+
+            window.onload = function () {
+                loadSearch();
+            };
+        </script>
     </div>
-
-    <input type=""text" id="searchInput" name="search" placeholder="Search alerts..." onkeyup="filterAlerts(); saveSearch()" style="width: 100%; padding: 0.5rem; margin-bottom: 1rem; border-radius: 5px; border: 1px solid #444; background: var(--input-bg); color: var(--input-text);">
-
-    {% if alerts %}
-        {% for alert in alerts %}
-            <div class="alert-entry severity-{{ alert.severity|lower }}">
-                <strong>Timestamp:</strong> {{ alert.local_time or alert.timestamp or 'N/A' }}<br>
-                <strong>Source IP:</strong> {{ alert.src_ip or 'N/A' }}<br>
-                <strong>Destination IP:</strong> {{ alert.dest_ip or 'N/A' }}<br>
-                <strong>Protocol:</strong> {{ alert.proto or 'N/A' }}<br>
-                <strong>Alert:</strong> {{ alert.alert.signature if alert.alert else 'No signature' }}<br>
-                <strong>Severity:</strong> {{ alert.severity }}
-            </div>
-        {% endfor %}
-    {% else %}
-        <p>No alerts found in eve.json.</p>
-    {% endif %}
-
-    <script>
-        // Refresh the page every 10 seconds
-        setTimeout(() => {
-            saveSearch();
-            location.reload();
-        }, 10000); // 10,000 milliseconds = 10 seconds
-
-        function filterAlerts() {
-            const input = document.getElementById("searchInput").value.toLowerCase();
-            const alerts = document.querySelectorAll(".alert-entry");
-
-            alerts.forEach(alert => {
-                const text = alert.innerText.toLowerCase();
-                alert.style.display = text.includes(input) ? "" : "none";
-            })
-        }
-
-        function saveSearch() {
-            const value = document.getElementById("searchInput").value;
-            localStorage.setItem("suricataSearch", value);
-        }
-
-        function loadSearch() {
-            const input = document.getElementById("searchInput");
-            const saved = localStorage.getItem("suricataSearch");
-            
-            if (saved) {
-                input.value = saved;
-                filterAlerts(); // Re-filter after setting input
-            }
-
-            // Put cursor at the end and focus if user had previously typed something
-            if (saved && saved.length > 0) {
-                input.focus();
-                input.setSelectionRange(input.value.length, input.value.length);
-            }
-        }
-
-        window.onload = function () {
-            loadSearch();
-        };
-    </script>
 </body>
 </html>
