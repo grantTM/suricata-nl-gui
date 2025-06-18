@@ -67,7 +67,7 @@ def view_logs():
     for entry in alerts:
         msg = entry.get("alert", {}).get("signature", "")
         entry["severity"] = map_severity(msg)
-        
+
         ts = entry.get("timestamp")
         if ts:
             try:
@@ -93,11 +93,21 @@ def view_logs():
     top_signatures = signatures.most_common(3)
     sources = Counter(entry["src_ip"] for entry in alerts if "src_ip" in entry)
     top_source = sources.most_common(1)[0][0] if sources else "N/A"
+    severities = Counter(entry["severity"] for entry in alerts if "severity" in entry)
+    high_count = severities.get("High", 0)
+    medium_count = severities.get("Medium", 0)
+    low_count = severities.get("Low", 0)
+
+    latest_alert_time = alerts[0]["local_time"] if alerts else "N/A"
 
     return render_template("logs.html", alerts=alerts,
-                       total_alerts=total_alerts,
-                       top_signatures=top_signatures,
-                       top_source=top_source)
+                        total_alerts=total_alerts,
+                        top_signatures=top_signatures,
+                        top_source=top_source,
+                        high_count=high_count,
+                        medium_count=medium_count,
+                        low_count=low_count,
+                        latest_alert_time=latest_alert_time)
                         
 
 if __name__ == "__main__":
