@@ -23,28 +23,8 @@ def map_severity(msg):
         return "Medium"
     else:
         return "Low"
-
-@app.route("/", methods=["GET", "POST"])
-def index():
-    generated_rule = None
-    alert = None
-
-    if request.method == "POST":
-        user_input = request.form.get("nl_rule")
-        sid = get_next_sid(RULES_FILE)
-        rule = translate_to_suricata(user_input, sid)
-
-        if rule:
-            generated_rule = rule
-            if "duplicate" not in rule.lower():  # crude check, refine later
-                save_rule_to_file(rule)
-        else:
-            alert = "⚠️ Could not translate input."
-
-    return render_template("index.html", rule=generated_rule, alert=alert)
-
-@app.route("/logs")
-def view_logs():
+    
+def get_recent_alerts(limit=20):
     alerts = []
 
     if os.path.exists(EVE_LOG_PATH):
@@ -61,7 +41,7 @@ def view_logs():
             alerts = [{"timestamp": "N/A", "src_ip": "N/A", "dest_ip": "N/A", "proto": "N/A", "alert": {"signature": f"Error reading eve.json: {e}"}}]
 
     # Show only the most recent 20 alerts in descending order
-    alerts = alerts[-20:][::-1]
+    alerts = alerts[-limit:][::-1]
 
     # Convert UTC to local time (e.g., Central Time)
     local_tz = pytz.timezone("America/Chicago")
@@ -88,6 +68,30 @@ def view_logs():
                     "%Y-%m-%d %I:%M:%S %p %Z")
             else:
                 entry["local_time"] = ts  # fallback
+    return alerts
+
+@app.route("/", methods=["GET", "POST"])
+def index():
+    generated_rule = None
+    alert = None
+
+    if request.method == "POST":
+        user_input = request.form.get("nl_rule")
+        sid = get_next_sid(RULES_FILE)
+        rule = translate_to_suricata(user_input, sid)
+
+        if rule:
+            generated_rule = rule
+            if "duplicate" not in rule.lower():  # crude check, refine later
+                save_rule_to_file(rule)
+        else:
+            alert = "⚠️ Could not translate input."
+
+    return render_template("index.html", rule=generated_rule, alert=alert)
+
+@app.route("/logs")
+def view_logs():
+    alerts = get_recent_alerts()
 
     # Summary statistics
     total_alerts = len(alerts)
@@ -113,7 +117,7 @@ def view_logs():
                         
 @app.route("/download_alerts")
 def download_alerts():
-    alerts = view_logs().kwargs["alerts"] if hasattr(view_logs(), 'kwargs') else []
+    alerts = get_recent_alerts
 
     output = io.StringIO()
     writer = csv.writer(output)
@@ -128,6 +132,9 @@ def download_alerts():
             a.get("alert", {}).get("signature", "N/A"),
             a.get("severity", "N/A")
         ])
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"alerts_{timestamp}.csv"
 
     response = make_response(output.getvalue())
     response.headers["Content-Disposition"] = "attachment; filename=alerts.csv"
