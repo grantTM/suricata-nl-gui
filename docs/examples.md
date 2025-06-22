@@ -116,7 +116,7 @@ Flags HTTP requests using automated tools like `curl`, often linked to scanning 
 
 **Generated Rule:**
 ```suricata
-alert http any any -> any any (msg:"Executable File Download Detected"; flow:established,to_client; content:".exe"; http_uri; claddtype:bad-unknown; sid:1000007; rev:1;)
+alert http any any -> any any (msg:"Executable File Download Detected"; flow:established,to_client; content:".exe"; http_uri; classtype:bad-unknown; sid:1000007; rev:1;)
 ```
 
 **Explanation:**
