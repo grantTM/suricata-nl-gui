@@ -138,6 +138,7 @@ Triggers on `script` tags in HTTP client data, an obvious indicator of XSS
 **Generated Rule:**
 ```suricata
 alert tcp [10.0.0.0/8] any -> [10.0.0.0/8] 445 (msg:"Internal SMB Traffic - Potential Lateral Movement"; flow:to_server, established; content:"SMB"; nocase; classtype:policy-violations; sid:1000009; rev:1;)
+```
 
 ---
 
