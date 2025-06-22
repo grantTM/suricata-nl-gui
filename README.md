@@ -36,4 +36,4 @@ Common feedback from small businesses or those familiar with them is that *"We d
 
 ## Getting Started
 
-See [`docs/quickstart.md`](./quickstart.md) to launch the tool on your system or try it with Docker
+See [`docs/quickstart.md`](./docs/quickstart.md) to launch the tool on your system or try it with Docker
