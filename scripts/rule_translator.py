@@ -33,6 +33,25 @@ def translate_to_suricata(nl_input, sid):
     elif "brute force" in nl_input and "ssh" in nl_input:
         return f'alert tcp any any -> any 22 (msg:"Possible SSH brute force attempt"; flags:S; threshold:type both, track by_src, count 2, seconds 30; sid:{sid}; rev:1;)'
 
+    elif "sql injection" in nl_input:
+        return f'alert http any any -> any any (msg:"Possible SQL injection Attempt"; content:"select"; nocase; http_uri; pcre:"/select.+from/i"; classtype:web-application-attack; sid:{sid}; rev:1;)'
+
+    # Suspicious User-Agent (Phishing/Malware)
+    elif "suspicious user agent" in nl_input:
+        return f'alert http any any -> any any (msg:"Suspicious User-Agent Detected"; content:"User-Agent|3A|"; http_header; content:"curl"; nocase; distance:0; classtype:trojan-activity; sid:{sid}; rev:1;)'
+    
+    # Malicious File Download (Executable)
+    elif "exe download" in nl_input or ".exex file download" in nl_input:
+        return f'alert http any any -> any any (msg:"Executable File Download Detected"; flow:established,to_client; content:".exe"; http_uri; classtype:bad-unknown; sid:{sid}; rev:1;)'
+    
+    # XSS Attack (Web App)
+    elif "cross-site scripting" in nl_input or "xss attack" in nl_input:
+        return f'alert http any any -> any any (msg:"Potential XSS Attempt"; content:"<script>"; nocase; http_client_body; classtype:web-application-attack; sid:{sid}; rev:1;)'
+    
+    # Internal Lateral Movement
+    elif "internal smb connection" in nl_input or "lateral movement" in nl_input:
+        return f'alert tcp [10.0.0.0/8] any -> [10.0.0.0/8] 445 (msg:"Internal SMB Traffic - Potential Lateral Movement"; flow:to_server, established; content:"SMB"; nocase; classtype:policy-violation; sid:{sid}; rev:1;)'
+
     else:
         return None
 
