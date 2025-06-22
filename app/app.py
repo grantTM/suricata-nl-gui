@@ -78,7 +78,7 @@ def get_recent_alerts(limit=20):
     return alerts
 
 @app.route("/", methods=["GET"])
-def index_redirect();
+def index_redirect():
     return redirect("/logs")
 
 @app.route("/translate", methods=["GET", "POST"])
