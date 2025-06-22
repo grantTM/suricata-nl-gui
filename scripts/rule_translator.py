@@ -1,5 +1,6 @@
 import re
 import os
+import logging
 
 RULES_FILE = os.path.expanduser("~/suricata_nl_gui/rules/my.rules")
 SID_START = 1000001 # Starting SID range for custom rules
@@ -83,16 +84,16 @@ def save_rule_to_file(rule, filepath=RULES_FILE):
     Save rule to file only if it's not a duplicate.
     """
     if rule_exists(rule, filepath):
-        print("⚠️ Duplicate rule detected. Rule not saved.")
-        return
+        logging.warning("Duplicate rule detected. Rule not saved.")
+        raise ValueError("Duplicate rule detected. Rule not saved.")
     
     try:
         with open(filepath, "a") as f:
             f.write(rule + "\n")
-        print(f"\n✅ Rule saved to: {filepath}")
+        logging.info(f"Rule saved to: {filepath}")
     except Exception as e:
-        print(f"❌ Failed to save rule: {e}")
-
+        logging.exception("Failed to save rule.")
+        raise e
 
 if __name__ == "__main__":
     print("🛡️  Natural Language to Suricata Rule Translator\n")
