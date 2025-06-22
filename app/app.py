@@ -7,6 +7,7 @@ import os
 from collections import Counter
 from datetime import datetime
 import pytz
+import re
 
 sys.path.append("../scripts")  # So we can import rule logic
 from rule_translator import translate_to_suricata, get_next_sid, RULES_FILE, save_rule_to_file
