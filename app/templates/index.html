@@ -140,7 +140,15 @@
 
     {% if rule %}
         <h3>🧾 Translated Suricata Rule:</h3>
-        <div class="result">{{ rule }}</div>
+        <form method="POST" action="/confirm_rule">
+            <textarea name="confirmed rule" rows="4">{{ rule }}</textarea>
+            
+            <label for="sid_override">Optional: Edit SID</label>
+            <input type="text" name="sid_override" placeholder="Leave blank to keep SID from rule">
+
+            <button type="submit" name="action" value="confirm">Confirm & Save</button>
+            <button type="submit" name="action" value="cancel">Cancel</button>
+        </form>
     {% endif %}
 </body>
 </html>

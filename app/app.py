@@ -82,12 +82,33 @@ def index():
 
         if rule:
             generated_rule = rule
-            if "duplicate" not in rule.lower():  # crude check, refine later
-                save_rule_to_file(rule)
         else:
             alert = "⚠️ Could not translate input."
 
     return render_template("index.html", rule=generated_rule, alert=alert)
+
+@app.route("/confirm_rule", methods=["POST"])
+def confirm_rule():
+    action = request.form.get("action")
+    if action == "cancel":
+        return render_template("index.html", alert="Rule creation canceled.")
+    
+    raw_rule = request.form.get("confirmed_rule")
+    sid_override = request.form.get("sid_override")
+
+    if sid_override:
+        try:
+            sid = int(sid_override)
+            # Replace existing SID in rule with the new one
+            raw_rule = re.sub(r"sid:\d+;", f"sid:{sid};", raw_rule)
+        except ValueError:
+            return render_template("index.html", rule=raw_rule, alert="Invalid SID format.")
+        
+    try:
+        save_rule_to_file(raw_rule)
+        return render_template("index.html", alert="Rule saved successfully.")
+    except Exception as e:
+        return render_template("index.html", rule=raw_rule, alert=f"Failed to save rule: {e}")
 
 @app.route("/logs")
 def view_logs():
