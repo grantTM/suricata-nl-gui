@@ -26,84 +26,118 @@ Additional options like `flow`, `threshold`, `dsize`, `content`, and `itype` ref
 You will see these components reused in the examples below.
 
 ---
-
-### 1. SSH Brute Force Attempt
+### 1. External SSH Attempt
 
 **Input:**
-alert on brute force login attempts over SSH
+`alert on external ssh attempt`
 
 **Generated Rule:**
 ```suricata
-alert tcp any any -> any 22 (msg:"Potential SSH brute force login attempt"; flow:to_server,established; threshold: type both, track by_src, count 5, seconds 60; sid 1000001; rev:1;)
+alert tcp any any -> any 22 (msg:"External SSH attempt detected"; flow:to_server; flags:S; sid 1000001; rev:1;)
 ```
 
 **Explanation:**
-Triggers if 5 or more login attempts are made over SSH (port 22) to a server within 60 seconds
+Triggers on external TCP SYN packets sent to port 22 (SSH), alerting to unwanted connection attempts
 
-### 2. SSH from External IP
+### 2. ICMP Traffic
 
 **Input:**
-alert me on SSH from outside IP
+`alert on icmp traffic`
 
 **Generated Rule:**
 ```suricata
-alert tcp !$HOME_NET any -> $HOME_NET 22 (msg:"External SSH connection attempt"; flow:to_server,established; sid:1000002; rev:1;)
+alert icmp any any -> any any (msg:"ICMP traffic detected"; sid:1000002; rev:1;)
 ```
 
 **Explanation:**
-Detects incoming SSH traffic from outside your network
+Flags any ICMP activity (e.g., ping scans), often used in network reconnaissance
 
-### 3. Suspicious DNS Lookup
+### 3. Port Scan Detection
 
 **Input:**
-`detect DNS lookups to strange domains`
+`alert on port scan`
 
 **Generated Rule:**
 ```suricata
-alert udp any any -> any 53 (msg:"Suspicious DNS Query"; content:".xyz"; nocase; sid:1000003; rev:1;)
+alert ip any any -> any any (msg:"Potential port scan detected"; threshold:type both, track by_src, count 20, seconds 5; sid:1000003; rev:1;)
 ```
 
 **Explanation**
-Flags DNS requests that include ".xyz" --- often used in malicious domains. Content can be modified by editing the rule after generation
+Detects possible scanning behavior by monitoring for 20 connection attempts in 5 seconds from the same source
 
-### 4. Web Server Access Flood
+### 4. SSH Brute Force
 
 **Input:**
-`alert on more than 10 requests to web server in 30 seconds`
+`alert on ssh brute force`
 
 **Generated Rule:**
 ```suricata
-alert tcp any any -> $HOME_NET 80 (msg:"Web server access flood"; flow:to_server,established; threshold:type both, track_by_src, count 10, seconds 30; sid:1000004; rev:1;)
+alert tcp any any -> any 22 (msg:"Possible SSH brute force attempt"; flags:S; threshold:type both, track by_src, count 2, seconds 30; sid:1000004; rev:1;)
 ```
 
 **Explanation:**
-Helps detect early signs of a DDoS attack or aggressive scanning behavior
+Flags repeated connection attempts to SSH within a short time frame, indicating brute force attempts
 
-### 5. File Exfiltration Attempt
+### 5. SQL Injection Attempt
 
 **Input:**
-`alert on large outbound file transfers`
+`alert on SQL injection`
 
 **Generated Rule:**
 ```suricata
-alert tcp $HOME_NET any -> !$HOME_NET any (msg:"Possible file exfiltration"; flow:to_server,established; dsize:>1000; sid:1000005; rev:1;)
+alert http any any -> any any (msg:"Possible SQL injection Attempt"; content:"select"; nocase; http_uri: pcre:"/select.+from/i"; classtype:web-application-attack; sid:1000005; rev:1;)
 ```
 
 **Explanation:**
-Detects large data transfers originating from hosts to external destinations
+Matches suspicious SQL keywords and patterns in HTTP URI traffic, signaling possible injection attacks
 
-### 6. ICMP Ping Sweep
+### 6. Suspicious User-Agent
 
 **Input:**
-`detect ping sweep`
+`alert on suspicious user agent`
 
 **Generated Rule:**
 ```suricata
-alert icmp any any -> any any (msg:"Ping sweep detected"; itype:8; sid:1000006; rev:1;)
+alert http any any -> any any (msg:"Suspicious User-Agent Detected"; content:"User-Agent|3A|"; http_header; content:"curl"; nocase; distance:0; classtype:trojan-activity; sid:1000006; rev:1;)
 ```
 
 **Explanation:**
-Flags basic ICMP echo request commonly used to map active hosts.
+Flags HTTP requests using automated tools like `curl`, often linked to scanning or exploitation.
+
+### 7. Executable File Download
+
+**Input:**
+`alert on exe download`
+
+**Generated Rule:**
+```suricata
+alert http any any -> any any (msg:"Executable File Download Detected"; flow:established,to_client; content:".exe"; http_uri; claddtype:bad-unknown; sid:1000007; rev:1;)
+```
+
+**Explanation:**
+Detects HTTP downloads of `.exe` files, commonly associated with malware delivery
+
+### 8. Cross-Site Scripting (XSS)
+
+**Input:**
+`alert on xss attack`
+
+**Generated Rule:**
+```suricata
+alert http any any -> any any (msg:"Potential XSS Attempt"; content:"<script>"; nocase; http_client_body; classtype:web-application-attack; sid:1000008; rev:1;)
+```
+
+**Explanation:**
+Triggers on `script` tags in HTTP client data, an obvious indicator of XSS
+
+### 9. Internal SMB Lateral Movement
+
+**Input:**
+`alert on lateral movement with smb`
+
+**Generated Rule:**
+```suricata
+alert tcp [10.0.0.0/8] any -> [10.0.0.0/8] 445 (msg:"Internal SMB Traffic - Potential Lateral Movement"; flow:to_server, established; content:"SMB"; nocase; classtype:policy-violations; sid:1000009; rev:1;)
 
 ---
 
