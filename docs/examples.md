@@ -26,6 +26,11 @@ Additional options like `flow`, `threshold`, `dsize`, `content`, and `itype` ref
 You will see these components reused in the examples below.
 
 ---
+
+The examples below demonstrate how this tool takes plain-English user input and translates it into functional Suricata alert rules.
+
+Each rule here reflects actual attack patterns that are frequently observed in real-world breaches and are aligned with common SME threat vectors covered in the 2025 Verizon DBIR Small and Medium-Sized Business Snapshot. 96% of attacks are attributed to system intrusion, social engineering and basic web attacks [Source: 2025 Verizon DBIR SMB Snapshot](https://www.verizon.com/business/resources/infographics/2025-dbir-smb-snapshot.pdf)
+
 ### 1. External SSH Attempt
 
 **Input:**
@@ -139,6 +144,9 @@ Triggers on `script` tags in HTTP client data, an obvious indicator of XSS
 ```suricata
 alert tcp [10.0.0.0/8] any -> [10.0.0.0/8] 445 (msg:"Internal SMB Traffic - Potential Lateral Movement"; flow:to_server, established; content:"SMB"; nocase; classtype:policy-violations; sid:1000009; rev:1;)
 ```
+
+**Explanation:**
+Monitors internal traffic over SMB (port 445), which could indicate lateral movement inside the network.
 
 ---
 
