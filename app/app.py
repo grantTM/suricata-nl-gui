@@ -8,6 +8,12 @@ from collections import Counter
 from datetime import datetime
 import pytz
 import re
+import logging
+
+# Configure logging
+logging.basicConfig(filename='app.log',
+                    level=logging.INFO,
+                    format='%(asctime)s %(levelname)s: %(message)s')
 
 sys.path.append("../scripts")  # So we can import rule logic
 from rule_translator import translate_to_suricata, get_next_sid, RULES_FILE, save_rule_to_file
@@ -92,10 +98,15 @@ def index():
 def confirm_rule():
     action = request.form.get("action")
     if action == "cancel":
+        logging.info("User canceled rule creation.")
         return render_template("index.html", alert="Rule creation canceled.")
     
     raw_rule = request.form.get("confirmed_rule")
     sid_override = request.form.get("sid_override")
+
+    if not raw_rule:
+        logging.error("No rule content submitted for confirmation.")
+        return render_template("index.html", alert="No rule content provided.")
 
     if sid_override:
         try:
@@ -103,12 +114,21 @@ def confirm_rule():
             # Replace existing SID in rule with the new one
             raw_rule = re.sub(r"sid:\d+;", f"sid:{sid};", raw_rule)
         except ValueError:
+            logging.warning(f"Invalid SID entered: {sid_override}")
             return render_template("index.html", rule=raw_rule, alert="Invalid SID format.")
         
     try:
+        # Check if SID already exists
+        with open(RULES_FILE, "r") as f:
+            if f"sid:{sid};" in f.read():
+                logging.warning(f"Duplicate SID attempted: {sid}")
+                return render_template("index.html", rule=raw_rule, alert="SID already exists. Choose unique ID to proceed.")
+            
         save_rule_to_file(raw_rule)
+        logging.info(f"Rule saved successfully: {raw_rule.strip()[:60]}...")
         return render_template("index.html", alert="Rule saved successfully.")
     except Exception as e:
+        logging.exception("Failed to save rule")
         return render_template("index.html", rule=raw_rule, alert=f"Failed to save rule: {e}")
 
 @app.route("/logs")
