@@ -1,5 +1,5 @@
 import json
-from flask import Flask, render_template, request, make_response
+from flask import Flask, render_template, request, make_response, redirect
 import csv
 import io
 import sys
@@ -77,8 +77,12 @@ def get_recent_alerts(limit=20):
                 entry["local_time"] = ts  # fallback
     return alerts
 
-@app.route("/", methods=["GET", "POST"])
-def index():
+@app.route("/", methods=["GET"])
+def index_redirect();
+    return redirect("/logs")
+
+@app.route("/translate", methods=["GET", "POST"])
+def translate():
     generated_rule = None
     alert = None
 
