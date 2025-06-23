@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Rule Translator</title>
+    <title>Natural Language Rule Translator</title>
     <style id="theme-style">
         :root {
             --bg: #121212;
@@ -15,9 +15,53 @@
 
         body {
             font-family: Arial, sans-serif;
-            margin: 2rem;
+            margin: 0;
             background: var(--bg);
             color: var(--text);
+        }
+
+        .layout {
+            display: flex;
+        }
+
+        nav {
+            width: 220px;
+            padding: 1rem;
+            background: var(--input-bg);
+            border-right: 1px solid #444;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        nav h3 {
+            margin-top: 0;
+        }
+
+        nav ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        nav ul li {
+            margin-bottom: 1rem;
+        }
+
+        nav a {
+            color: var(--text);
+            text-decoration: none;
+        }
+
+        nav a.active {
+            font-weight: bold;
+            color: #f39c12;
+            border-left: 4px solid #f39c12;
+            padding-left: 8px;
+            background-color: #2a2a2a;
+        }
+
+        .main {
+            flex-grow: 1;
+            padding: 2rem;
         }
 
         input[type="text"], textarea {
@@ -35,15 +79,12 @@
             color: var(--button-text);
             border: none;
             cursor: pointer;
-        }
-
-        .content-wrapper {
-            max-width: 800px;
-            margin: 0 auto;
+            margin-right: 10px;
         }
 
         .alert {
             color: var(--alert-color);
+            margin-top: 1rem;
         }
 
         .result {
@@ -52,6 +93,7 @@
             border-radius: 5px;
             white-space: pre-wrap;
             border: 1px solid #666;
+            margin-top: 1rem;
         }
 
         h1 {
@@ -59,9 +101,7 @@
         }
 
         .theme-switch-wrapper {
-            display: flex;
-            justify-content: flex-end;
-            margin-bottom: 1rem;
+            margin-top: 2rem;
         }
 
         .theme-switch {
@@ -113,42 +153,47 @@
             transform: translateX(26px);
             content: "☀️";
         }
-
-        .nav-link {
-            float: right;
-            margin-right: 1rem;
-        }
     </style>
 </head>
 <body>
-    <div class="content-wrapper">
-        {% include 'theme.html' %}
-        <a href="/logs" class="nav-link">View Logs</a>
-        <a href="/rules" class="nav-link">View Rules</a>
+    <div class="layout">
+        <!-- Sidebar -->
+        <nav>
+            <h3>Navigation</h3>
+            <ul>
+                <li><a href="/logs" class="{% if active_page == 'logs' %}active{% endif %}">Alerts</a></li>
+                <li><a href="/translate" class="{% if active_page == 'translate' %}active{% endif %}">Translator</a></li>
+                <li><a href="/rules" class="{% if active_page == 'rules' %}active{% endif %}">Rules</a></li>
+            </ul>
+            {% include 'theme.html' %}
+        </nav>
 
-        <h1>🛡 Natural Language Rule Translator</h1>
-        <form method="post">
-            <label for="nl_rule">Enter detection rule in plain English:</label>
-            <input type="text" name="nl_rule" required>
-            <button type="submit">Translate</button>
-        </form>
+        <!-- Main Content -->
+        <div class="main">
+            <h1>🛡 Natural Language Rule Translator</h1>
+            <form method="post">
+                <label for="nl_rule">Enter detection rule in plain English:</label>
+                <input type="text" name="nl_rule" id="nl_rule" required>
+                <button type="submit">Translate</button>
+            </form>
+
+            {% if alert %}
+                <div class="alert">{{ alert }}</div>
+            {% endif %}
+
+            {% if rule %}
+                <h3>🧾 Translated Suricata Rule:</h3>
+                <form method="POST" action="/confirm_rule">
+                    <textarea name="confirmed_rule" rows="4">{{ rule }}</textarea>
+
+                    <label for="sid_override">Optional: Edit SID</label>
+                    <input type="text" name="sid_override" placeholder="Leave blank to keep SID from rule">
+
+                    <button type="submit" name="action" value="confirm">Confirm & Save</button>
+                    <button type="submit" name="action" value="cancel">Cancel</button>
+                </form>
+            {% endif %}
+        </div>
     </div>
-
-    {% if alert %}
-        <div class="alert">{{ alert }}</div>
-    {% endif %}
-
-    {% if rule %}
-        <h3>🧾 Translated Suricata Rule:</h3>
-        <form method="POST" action="/confirm_rule">
-            <textarea name="confirmed_rule" rows="4">{{ rule }}</textarea>
-            
-            <label for="sid_override">Optional: Edit SID</label>
-            <input type="text" name="sid_override" placeholder="Leave blank to keep SID from rule">
-
-            <button type="submit" name="action" value="confirm">Confirm & Save</button>
-            <button type="submit" name="action" value="cancel">Cancel</button>
-        </form>
-    {% endif %}
 </body>
 </html>
