@@ -79,7 +79,20 @@
             padding: 1rem;
             background: #f8f8f8;
             color: #000;
-            border-left: 4px solid green;
+            border-left: 4px solid #888; /* default */
+        }
+
+        /* Severity-specific colors */
+        .alert-card.high {
+            border-left-color: #c0392b; /* red */
+        }
+
+        .alert-card.medium {
+            border-left-color: #f39c12; /* orange */
+        }
+
+        .alert-card.low {
+            border-left-color: #27ae60; /* green */
         }
 
         .theme-switch-wrapper {
@@ -148,6 +161,16 @@
                 <li><a href="/rules" class="{% if active_page == 'rules' %}active{% endif %}">Rules</a></li>
             </ul>
 
+            <div style="margin-top: 2rem;">
+                <h3>Documentation</h3>
+                <ul>
+                    <li><a href="https://github.com/grantTM/suricata-nl-gui/blob/main/docs/quickstart.md" target="_blank">Quick Start</a></li>
+                    <li><a href="https://github.com/grantTM/suricata-nl-gui/blob/main/docs/glossary.md" target="_blank">Glossary</a></li>
+                    <li><a href="https://github.com/grantTM/suricata-nl-gui/blob/main/docs/examples.md" target="_blank">Examples</a></li>
+                    <li><a href="https://github.com/grantTM/suricata-nl-gui/blob/main/docs/faq.md" target="_blank">FAQs</a></li>
+                </ul>
+            </div>
+
             <!-- Theme toggle -->
             <div class="theme-switch-wrapper">
                 <label class="theme-switch">
@@ -190,7 +213,7 @@
             </div>
 
             {% for alert in alerts %}
-                <div class="alert-card alert-entry">
+                <div class="alert-card alert-entry {{ alert.severity | lower }}">
                     <p><strong>Timestamp:</strong> {{ alert.local_time }}</p>
                     <p><strong>Source IP:</strong> {{ alert.src_ip }}</p>
                     <p><strong>Destination IP:</strong> {{ alert.dest_ip }}</p>
