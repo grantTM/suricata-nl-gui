@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Suricata Alerts</title>
+    <title>Recent Suricata Alerts</title>
     <style id="theme-style">
         :root {
             --bg: #121212;
@@ -15,160 +15,128 @@
         
         body {
             font-family: Arial, sans-serif;
-            margin: 2rem;
+            margin: 0;
             background: var(--bg);
             color: var(--text);
         }
 
-        .content-wrapper {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .summary {
-            background: var(--input-bg);
+        nav {
+            width: 220px;
             padding: 1rem;
-            border: 1px solid #666;
-            margin-bottom: 1.5rem;
-            border-radius: 5px;
-        }
-
-        .summary ul {
-            margin: 0.5rem 0 0 1rem;
-        }
-
-        .alert-entry {
             background: var(--input-bg);
-            padding: 1rem;
+            border-right: 1px solid #444;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        nav h3 {
+            margin-top: 0;
+        }
+
+        nav ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        nav ul li {
             margin-bottom: 1rem;
-            border-left: 4px solid var(--alert-color);
+        }
+
+        nav a {
+            color: var(--text);
+            text-decoration: none;
+        }
+
+        .main {
+            flex-grow: 1;
+            padding: 2rem;
+        }
+
+        .layout {
+            display: flex;
+        }
+
+        .alert-box {
+            background: var(--input-bg);
+            padding: 1rem;
             border-radius: 5px;
-            white-space: pre-wrap;
+            border: 1px solid #666;
+        }
+
+        .search-box, .download-btn {
+            margin-top: 1rem;
+        }
+
+        .alert-card {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #f8f8f8;
+            color: #000;
+            border-left: 4px solid green;
         }
 
         .theme-switch-wrapper {
-            display: flex;
-            justify-content: flex-end;
-            margin-bottom: 1rem;
-        }
-
-        .theme-switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 24px;
-        }
-
-        .theme-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            background-color: #888;
-            border-radius: 34px;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            transition: 0.4s;
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "🌗";
-            height: 18px;
-            width: 18px;
-            left: 4px;
-            bottom: 3px;
-            background-color: white;
-            border-radius: 50%;
-            transition: 0.4s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-        }
-
-        input:checked + .slider {
-            background-color: #444;
-        }
-
-        input:checked + .slider:before {
-            transform: translateX(26px);
-            content: "☀️";
-        }
-
-        .nav-link {
-            float: right;
-            margin-right: 1rem;
-        }
-
-        /* Severity color overlays */
-        .severity-high {
-            border-left-color: #c0392b !important;
-        }
-
-        .severity-medium {
-            border-left-color: #f39c12 !important;
-        }
-
-        .severity-low {
-            border-left-color: #27ae60 !important;
+            margin-top: 2rem;
         }
     </style>
 </head>
 <body>
-    <div class="content-wrapper">
-        {% include 'theme.html' %}
-        <a href="/translate" class="nav-link">← Back to Translator</a>
-        <h1>Recent Suricata Alerts</h1>
-
-        <div class="summary">
-            <p><strong>Total Alerts:</strong> {{ total_alerts }}</p>
-            <p><strong>Most Common Source IP:</strong> {{ top_source }}</p>
-            <p><strong>Top Signatures:</strong></p>
+    <div class="layout>">
+        <!-- Sidebar -->
+        <nav>
+            <h3>Navigation</h3>
             <ul>
-                {% for sig, count in top_signatures %}
-                    <li>{{ sig }} ({{ count }})</li>
-                {% endfor %}
+                <li><a href="/logs">Alerts</a></li>
+                <li><a href="/translate">Translator</a></li>
+                <li><a href="/rules">Rules</a></li>
             </ul>
-            <p><strong>Most Recent Alert:</strong> {{ latest_alert_time }}</p>
-            <p><strong>Severity Breakdown:</strong></p>
-            <ul>
-                <li><span style="color:#c0392b;">High:</span> {{ high_count }}</li>
-                <li><span style="color:#f39c12;">Medium:</span> {{ medium_count }}</li>
-                <li><span style="color:#27ae60;">Low:</span> {{ low_count }}</li>
-            </ul>
-        </div>
 
-        <input 
-            type="text" 
-            id="searchInput" 
-            name="search" 
-            placeholder="Search alerts..." 
-            onkeyup="filterAlerts(); saveSearch()" 
-            style="width: 100%; box-sizing: border-box; padding: 1rem; margin-bottom: 1rem; border-radius: 5px; border: 1px solid #444; background: var(--input-bg); color: var(--input-text);">
-        
-        <a href="/download_alerts" style="display: inline-block; padding: 0.5rem 1rem; margin-bottom: 1rem; background-color: #444; color: white; text-decoration: none; border-radius: 5px;">Download alerts as CSV</a>
+            {% include 'theme.html'}
+        </nav>
 
-        {% if alerts %}
+        <!-- Main Content -->
+        <div class="main">
+            <h1>Recent Suricata Alerts</h1>
+
+            <div class="alert-box">
+                <p><strong>Total Alerts:</strong> {{ total_alerts }}</p>
+                <p><strong>Most Common Source IP:</strong> {{ top_source }}</p>
+                <p><strong>Top Signatures:</strong></p>
+                <ul>
+                    {% for sig, count in top_signatures %}
+                        <li>{{ sig }} ({{ count }})</li>
+                    {% endfor %}
+                </ul>
+                <p><strong>Most Recent Alert:</strong> {{ latest_alert_time }}</p>
+                <p><strong>Severity Breakdown:</strong></p>
+                <ul>
+                    <li><span style="color:#c0392b;">High:</span> {{ high_count }}</li>
+                    <li><span style="color:#f39c12;">Medium:</span> {{ medium_count }}</li>
+                    <li><span style="color:#27ae60;">Low:</span> {{ low_count }}</li>
+                </ul>
+            </div>
+
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search alerts..." style="width: 100%; padding: 0.5rem;">
+            </div>
+
+            <div class="download-btn">
+                <form action="/download_alerts" method="get">
+                    <button type="submit">Download alerts as CSV</button>
+                </form>
+            </div>
+
             {% for alert in alerts %}
-                <div class="alert-entry severity-{{ alert.severity|lower }}">
-                    <strong>Timestamp:</strong> {{ alert.local_time or alert.timestamp or 'N/A' }}<br>
-                    <strong>Source IP:</strong> {{ alert.src_ip or 'N/A' }}<br>
-                    <strong>Destination IP:</strong> {{ alert.dest_ip or 'N/A' }}<br>
-                    <strong>Protocol:</strong> {{ alert.proto or 'N/A' }}<br>
-                    <strong>Alert:</strong> {{ alert.alert.signature if alert.alert else 'No signature' }}<br>
-                    <strong>Severity:</strong> {{ alert.severity }}
+                <div class="alert-card">
+                    <p><strong>Timestamp:</strong> {{ alert.local_time }}</p>
+                    <p><strong>Source IP:</strong> {{ alert.src_ip }}</p>
+                    <p><strong>Destination IP:</strong> {{ alert.dest_ip }}</p>
+                    <p><strong>Protocol:</strong> {{ alert.proto }}</p>
+                    <p><strong>Alert:</strong> {{ alert.alert.signature }}</p>
+                    <p><strong>Severity:</strong> {{ alert.severity }}</p>
                 </div>
             {% endfor %}
-        {% else %}
-            <p>No alerts found in eve.json.</p>
-        {% endif %}
+        </div>
 
         <script>
             // Refresh the page every 10 seconds
