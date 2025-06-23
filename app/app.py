@@ -32,12 +32,12 @@ def map_severity(msg):
         return "High"
 
     elif any(term in msg for term in [
-        "port scan", "user-agent", "curl", "dns", "icmp"
+        "port scan", "user-agent", "curl", "dns", "ssh", "external ssh"
     ]):
         return "Medium"
 
     elif any(term in msg for term in [
-        "ssh", "external ssh"
+        "ICMP"
     ]):
         return "Low"
 
