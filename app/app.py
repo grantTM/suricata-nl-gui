@@ -1,5 +1,5 @@
 import json
-from flask import Flask, render_template, request, make_response, redirect
+from flask import Flask, render_template, request, make_response, redirect, session
 import csv
 import io
 import sys
@@ -24,12 +24,25 @@ EVE_LOG_PATH = "/var/log/suricata/eve.json"
 
 def map_severity(msg):
     msg = msg.lower()
-    if "brute force" in msg or "exfiltration" in msg:
+
+    if any(term in msg for term in [
+        "brute force", "sql injection", "xss", "executable", 
+        "smb", "telnet", "lateral movement"
+    ]):
         return "High"
-    elif "scan" in msg or "dns" in msg:
+
+    elif any(term in msg for term in [
+        "port scan", "user-agent", "curl", "dns", "icmp"
+    ]):
         return "Medium"
-    else:
+
+    elif any(term in msg for term in [
+        "ssh", "external ssh"
+    ]):
         return "Low"
+
+    return "Low"
+
     
 def get_recent_alerts(limit=20):
     alerts = []
@@ -115,14 +128,17 @@ def confirm_rule():
         logging.error("No rule content submitted for confirmation.")
         return render_template("index.html", alert="No rule content provided.")
 
-    if sid_override:
-        try:
+    try:
+        if sid_override:
             sid = int(sid_override)
-            # Replace existing SID in rule with the new one
             raw_rule = re.sub(r"sid:\d+;", f"sid:{sid};", raw_rule)
-        except ValueError:
-            logging.warning(f"Invalid SID entered: {sid_override}")
-            return render_template("index.html", rule=raw_rule, alert="Invalid SID format.")
+        else:
+            # Extract SID from rule if no override
+            sid_match = re.search(r"sid:(\d+);", raw_rule)
+            sid = int(sid_match.group(1)) if sid_match else None
+    except ValueError:
+        logging.warning(f"Invalid SID entered: {sid_override}")
+        return render_template("index.html", rule=raw_rule, alert="Invalid SID format.")
         
     try:
         # Check if SID already exists
@@ -201,6 +217,18 @@ def view_rules():
     return render_template("rules.html", 
                            rules=rules,
                            active_page="rules")
+
+@app.route("/faq")
+def faq():
+    return render_template("faq.html", active_page="faq")
+
+@app.route("/examples")
+def examples():
+    return render_template("examples.html", active_page="examples")
+
+@app.route("/glossary")
+def glossary():
+    return render_template("glossary.html", active_page="glossary")
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=5000)
