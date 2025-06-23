@@ -12,12 +12,16 @@
             --button-text: #fff;
             --alert-color: red;
         }
-        
+
         body {
             font-family: Arial, sans-serif;
             margin: 0;
             background: var(--bg);
             color: var(--text);
+        }
+
+        .layout {
+            display: flex;
         }
 
         nav {
@@ -47,13 +51,17 @@
             text-decoration: none;
         }
 
+        nav a.active {
+            font-weight: bold;
+            color: #f39c12;
+            border-left: 4px solid #f39c12;
+            padding-left: 8px;
+            background-color: #2a2a2a;
+        }
+
         .main {
             flex-grow: 1;
             padding: 2rem;
-        }
-
-        .layout {
-            display: flex;
         }
 
         .alert-box {
@@ -78,6 +86,56 @@
         .theme-switch-wrapper {
             margin-top: 2rem;
         }
+
+        .theme-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .theme-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            background-color: #888;
+            border-radius: 34px;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            transition: 0.4s;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "🌗";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 3px;
+            background-color: white;
+            border-radius: 50%;
+            transition: 0.4s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        input:checked + .slider {
+            background-color: #444;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+            content: "☀️";
+        }
     </style>
 </head>
 <body>
@@ -86,12 +144,18 @@
         <nav>
             <h3>Navigation</h3>
             <ul>
-                <li><a href="/logs">Alerts</a></li>
-                <li><a href="/translate">Translator</a></li>
-                <li><a href="/rules">Rules</a></li>
+                <li><a href="/logs" class="{% if active_page == 'logs' %}active{% endif %}">Alerts</a></li>
+                <li><a href="/translate" class="{% if active_page == 'translate' %}active{% endif %}">Translator</a></li>
+                <li><a href="/rules" class="{% if active_page == 'rules' %}active{% endif %}">Rules</a></li>
             </ul>
 
-            {% include 'theme.html'}
+            <!-- Theme toggle -->
+            <div class="theme-switch-wrapper">
+                <label class="theme-switch">
+                    <input type="checkbox" id="theme-toggle" />
+                    <span class="slider"></span>
+                </label>
+            </div>
         </nav>
 
         <!-- Main Content -->
@@ -127,7 +191,7 @@
             </div>
 
             {% for alert in alerts %}
-                <div class="alert-card">
+                <div class="alert-card alert-entry">
                     <p><strong>Timestamp:</strong> {{ alert.local_time }}</p>
                     <p><strong>Source IP:</strong> {{ alert.src_ip }}</p>
                     <p><strong>Destination IP:</strong> {{ alert.dest_ip }}</p>
@@ -137,49 +201,88 @@
                 </div>
             {% endfor %}
         </div>
-
-        <script>
-            // Refresh the page every 10 seconds
-            setTimeout(() => {
-                saveSearch();
-                location.reload();
-            }, 10000); // 10,000 milliseconds = 10 seconds
-
-            function filterAlerts() {
-                const input = document.getElementById("searchInput").value.toLowerCase();
-                const alerts = document.querySelectorAll(".alert-entry");
-
-                alerts.forEach(alert => {
-                    const text = alert.innerText.toLowerCase();
-                    alert.style.display = text.includes(input) ? "" : "none";
-                })
-            }
-
-            function saveSearch() {
-                const value = document.getElementById("searchInput").value;
-                localStorage.setItem("suricataSearch", value);
-            }
-
-            function loadSearch() {
-                const input = document.getElementById("searchInput");
-                const saved = localStorage.getItem("suricataSearch");
-
-                if (saved) {
-                    input.value = saved;
-                    filterAlerts(); // Re-filter after setting input
-                }
-
-                // Put cursor at the end and focus if user had previously typed something
-                if (saved && saved.length > 0) {
-                    input.focus();
-                    input.setSelectionRange(input.value.length, input.value.length);
-                }
-            }
-
-            window.onload = function () {
-                loadSearch();
-            };
-        </script>
     </div>
+
+    <!-- Theme and Alert Search Scripts -->
+    <script>
+        const style = document.getElementById('theme-style');
+        const toggle = document.getElementById('theme-toggle');
+
+        function applyLightMode() {
+            style.innerHTML = style.innerHTML.replace(
+                /:root\s*{[^}]+}/,
+                `:root {
+                    --bg: #ffffff;
+                    --text: #111111;
+                    --input-bg: #f9f9f9;
+                    --input-text: #000000;
+                    --button-bg: #dddddd;
+                    --button-text: #000000;
+                    --alert-color: #cc0000;
+                }`
+            );
+            localStorage.setItem('theme', 'light');
+            toggle.checked = true;
+        }
+
+        function applyDarkMode() {
+            location.reload();
+            localStorage.setItem('theme', 'dark');
+        }
+
+        toggle.addEventListener("change", () => {
+            if (toggle.checked) {
+                applyLightMode();
+            } else {
+                applyDarkMode();
+            }
+        });
+
+        window.addEventListener("DOMContentLoaded", () => {
+            const savedTheme = localStorage.getItem("theme");
+            if (savedTheme === "light") {
+                applyLightMode();
+            } else {
+                toggle.checked = false;
+            }
+        });
+
+        // Search + Refresh Logic
+        setTimeout(() => {
+            saveSearch();
+            location.reload();
+        }, 10000); // 10 seconds
+
+        function filterAlerts() {
+            const input = document.getElementById("searchInput").value.toLowerCase();
+            const alerts = document.querySelectorAll(".alert-entry");
+
+            alerts.forEach(alert => {
+                const text = alert.innerText.toLowerCase();
+                alert.style.display = text.includes(input) ? "" : "none";
+            });
+        }
+
+        function saveSearch() {
+            const value = document.getElementById("searchInput").value;
+            localStorage.setItem("suricataSearch", value);
+        }
+
+        function loadSearch() {
+            const input = document.getElementById("searchInput");
+            const saved = localStorage.getItem("suricataSearch");
+
+            if (saved) {
+                input.value = saved;
+                filterAlerts();
+                input.focus();
+                input.setSelectionRange(input.value.length, input.value.length);
+            }
+
+            input.addEventListener("input", filterAlerts);
+        }
+
+        window.onload = loadSearch;
+    </script>
 </body>
 </html>

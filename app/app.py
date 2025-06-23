@@ -159,7 +159,8 @@ def view_logs():
                         high_count=high_count,
                         medium_count=medium_count,
                         low_count=low_count,
-                        latest_alert_time=latest_alert_time)
+                        latest_alert_time=latest_alert_time,
+                        active_page="logs")
                         
 @app.route("/download_alerts")
 def download_alerts():
