@@ -96,9 +96,10 @@ def translate():
         else:
             alert = "⚠️ Could not translate input."
 
-    return render_template("index.html", rule=generated_rule, 
+    return render_template("index.html", 
+                           rule=generated_rule, 
                            alert=alert,
-                           active_page=translate)
+                           active_page="translate")
 
 @app.route("/confirm_rule", methods=["POST"])
 def confirm_rule():
