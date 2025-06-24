@@ -33,7 +33,7 @@ nc -zv $TARGET 22
 
 # 3. SSH Brute Force (6 Attempts)
 for i in {1..6}; do
-  sudo hping3 -S -p 22 -c 1 127.0.0.1 22 >/dev/null 2>&1
+  sudo hping3 -S -p 22 -c 1 127.0.0.1 >/dev/null 2>&1
 done
 
 # 4. Port Scan
