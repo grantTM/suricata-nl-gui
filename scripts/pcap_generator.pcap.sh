@@ -1,3 +1,4 @@
+#!/bin/bash
 
 TARGET="127.0.0.1"
 INTERFACE="lo"
@@ -32,8 +33,8 @@ ping -c 3 $TARGET
 nc -zv $TARGET 22
 
 # 3. SSH Brute Force (6 Attempts)
-for port in 10001 10002 10003 10004 10005 10006; do
-  sudo hping3 -S -p 22 -s $port -c 1 127.0.0.1 >/dev/null 2>&1
+for i in {1..6}; do
+  sudo hping3 -S -p 22 -s 12345 -c 1 127.0.0.1 >/dev/null 2>&1
 done
 
 # 4. Port Scan
@@ -51,7 +52,7 @@ curl -O "http://$TARGET/downloads/malware.exe"
 # 8. XSS Payload via POST
 curl -X POST -d "<script>alert('xss')</script>" "http://$TARGET/login"
 
-#9. Internal SMB Connection (to Port 445)
+# 9. Internal SMB Connection (to Port 445)
 nc -zv $TARGET 445
 
 # Finish
