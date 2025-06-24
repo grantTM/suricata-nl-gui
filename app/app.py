@@ -71,23 +71,30 @@ def get_recent_alerts(limit=20):
         entry["severity"] = map_severity(msg)
 
         ts = entry.get("timestamp")
+        utc_time = None
+
         if ts:
             try:
-                # Try with microseconds first
+                # Format with microseconds and offset
                 utc_time = datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%f%z")
-                entry["local_time"] = utc_time.astimezone(local_tz).strftime("%Y-%m-%d %I:%M:%S %p %Z")
             except ValueError:
                 try:
-                    # Fallback: no microseconds
-                    utc_time = datetime.strptime(ts, "%Y-%m-%dT%H:%M:%SZ")
+                    # Format without microseconds, with offset
+                    utc_time = datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S%z")
                 except ValueError:
-                    utc_time = None
+                    try:
+                        # Format without offset (Z suffix), treat as UTC
+                        utc_time = datetime.strptime(ts, "%Y-%m-%dT%H:%M:%SZ")
+                        utc_time = utc_time.replace(tzinfo=pytz.utc)
+                    except ValueError:
+                        logging.warning(f"Timestamp parsing failed for: {ts}")
+                        utc_time = None
 
-            if utc_time:
-                entry["local_time"] = utc_time.replace(tzinfo=pytz.utc).astimezone(local_tz).strftime(
-                    "%Y-%m-%d %I:%M:%S %p %Z")
-            else:
-                entry["local_time"] = ts  # fallback
+        if utc_time:
+            entry["local_time"] = utc_time.astimezone(local_tz).strftime("%Y-%m-%d %I:%M:%S %p %Z")
+        else:
+            entry["local_time"] = ts  # fallback to raw string if all parsing fails
+
     return alerts
 
 @app.route("/", methods=["GET"])
