@@ -31,8 +31,8 @@ ping -c 3 $TARGET
 # 2. External SSH Attempt
 nc -zv $TARGET 22
 
-# 3. SSH Brute Force (10 Attempts)
-for i in {1..10}; do nc -w 1 -zv 127.0.0.1 22; done
+# 3. SSH Brute Force (6 Attempts)
+for i in {1..6}; do timeout 0.5 bash -c "echo | telnet 127.0.0.1 22" >/dev/null 2>&1 done
 
 # 4. Port Scan
 nmap -p 21-25 $TARGET
