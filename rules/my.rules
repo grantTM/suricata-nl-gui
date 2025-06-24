@@ -1,7 +1,7 @@
 alert tcp any any -> any 22 (msg:"External SSH attempt detected"; flow:to_server; flags:S; sid:1000001; rev:1;)
 alert icmp any any -> any any (msg:"ICMP traffic detected"; sid:1000002; rev:1;)
 alert ip any any -> any any (msg:"Potential port scan detected"; threshold:type both, track by_src, count 25, seconds 5; sid:1000003; rev:1;)
-alert tcp any any -> any 22 (msg:"Possible SSH brute force attempt"; flow:to_server; flags:S; threshold:type both, track by_src, count 5, seconds 60; sid:1000004; rev:2;)
+alert tcp any any -> any 22 (msg:"Possible SSH brute force attempt"; flags:S; threshold:type both, track by_src, count 5, seconds 60; sid:1000004; rev:1;)
 alert http any any -> any any (msg:"Possible SQL injection Attempt"; content:"select"; nocase; http_uri; pcre:"/select.+from/i"; classtype:web-application-attack; sid:1000005; rev:1;)
 alert http any any -> any any (msg:"Suspicious User-Agent Detected"; content:"User-Agent|3A|"; http_header; content:"curl"; nocase; distance:0; classtype:trojan-activity; sid:1000006; rev:1;)
 alert http any any -> any any (msg:"Executable File Download Detected"; flow:established,to_server; content:".exe"; http_uri; classtype:bad-unknown; sid:1000007; rev:1;)
