@@ -15,7 +15,7 @@ logging.basicConfig(filename='app.log',
                     level=logging.INFO,
                     format='%(asctime)s %(levelname)s: %(message)s')
 
-sys.path.append("../scripts")  # So we can import rule logic
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'scripts'))
 from rule_translator import translate_to_suricata, get_next_sid, RULES_FILE, save_rule_to_file
 
 app = Flask(__name__)
