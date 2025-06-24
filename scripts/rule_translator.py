@@ -43,7 +43,7 @@ def translate_to_suricata(nl_input, sid):
     
     # Malicious File Download (Executable)
     elif "exe download" in nl_input or ".exe file download" in nl_input:
-        return f'alert http any any -> any any (msg:"Executable File Download Detected"; flow:established,to_client; file_data; content:".exe"; http_uri; classtype:bad-unknown; sid:{sid}; rev:1;)'
+        return f'alert http any any -> any any (msg:"Executable File Download Detected"; flow:established,to_server; content:".exe"; http_uri; classtype:bad-unknown; sid:{sid}; rev:1;)'
     
     # XSS Attack (Web App)
     elif "cross-site scripting" in nl_input or "xss attack" in nl_input:
