@@ -51,7 +51,7 @@ def translate_to_suricata(nl_input, sid):
     
     # Internal Lateral Movement
     elif "internal smb connection" in nl_input or "lateral movement" in nl_input:
-        return f'alert tcp [10.0.0.0/8] any -> [10.0.0.0/8] 445 (msg:"Internal SMB Traffic - Potential Lateral Movement"; flow:to_server, established; content:"SMB"; nocase; classtype:policy-violation; sid:{sid}; rev:1;)'
+        return f'alert tcp any any -> any 445 (msg:"Internal SMB Traffic - Potential Lateral Movement"; flow:to_server, established; content:"SMB"; nocase; classtype:policy-violation; sid:{sid}; rev:1;)'
 
     else:
         return None
