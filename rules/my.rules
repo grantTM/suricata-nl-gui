@@ -6,4 +6,4 @@ alert http any any -> any any (msg:"Possible SQL injection Attempt"; content:"se
 alert http any any -> any any (msg:"Suspicious User-Agent Detected"; content:"User-Agent|3A|"; http_header; content:"curl"; nocase; distance:0; classtype:trojan-activity; sid:1000013; rev:1;)
 alert http any any -> any any (msg:"Executable File Download Detected"; flow:established,to_server; content:".exe"; http_uri; classtype:bad-unknown; sid:1000014; rev:1;)
 alert http any any -> any any (msg:"Potential XSS Attempt"; content:"<script>"; nocase; http_client_body; classtype:web-application-attack; sid:1000015; rev:1;)
-alert tcp any any -> any 445 (msg:"Internal SMB Traffic - Potential Lateral Movement"; flow:to_server, established; content:"SMB"; nocase; classtype:policy-violation; sid:1000016; rev:1;)
+alert tcp any any -> any 445 (msg:"Internal SMB Traffic - Potential Lateral Movement"; flags:S; sid:1000016; rev:2;)

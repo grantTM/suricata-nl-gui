@@ -33,7 +33,7 @@ nc -zv $TARGET 22
 
 # 3. SSH Brute Force (6 Attempts)
 for i in {1..6}; do
-  timeout 0.5 bash -c "echo | telnet 127.0.0.1 22" >/dev/null 2>&1
+  sudo hping3 -S -p 22 -c 1 127.0.0.1 22 >/dev/null 2>&1
 done
 
 # 4. Port Scan
@@ -56,7 +56,7 @@ nc -zv $TARGET 445
 
 # Finish
 sleep 2
-sudo pkill -INT tcpdump
+sudo pkill -INT -f "tcpdump.*$PCAP_FILE"
 kill $HTTP_PID
 sleep 1
 echo "PCAP created: $PCAP_FILE"
