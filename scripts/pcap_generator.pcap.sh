@@ -56,7 +56,8 @@ nc -zv $TARGET 445
 
 # Finish
 sleep 2
-kill $TCPDUMP_PID
+sudo pkill -INT tcpdump
 kill $HTTP_PID
+sleep 1
 echo "PCAP created: $PCAP_FILE"
 rm -rf $WEB_DIR
