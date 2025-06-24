@@ -32,8 +32,8 @@ ping -c 3 $TARGET
 nc -zv $TARGET 22
 
 # 3. SSH Brute Force (6 Attempts)
-for i in {1..6}; do
-  sudo hping3 -S -p 22 -s 12345 -c 1 127.0.0.1 >/dev/null 2>&1
+for port in 10001 10002 10003 10004 10005 10006; do
+  sudo hping3 -S -p 22 -s $port -c 1 127.0.0.1 >/dev/null 2>&1
 done
 
 # 4. Port Scan
@@ -56,7 +56,9 @@ nc -zv $TARGET 445
 
 # Finish
 sleep 2
-sudo pkill -INT -f "tcpdump.*$PCAP_FILE"
+if ps -p $TCPDUMP_PID > /dev/null; then
+  sudo kill -INT $TCPDUMP_PID
+fi
 kill $HTTP_PID
 sleep 1
 echo "PCAP created: $PCAP_FILE"
