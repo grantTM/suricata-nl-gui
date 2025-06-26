@@ -1,5 +1,5 @@
 
-# Quickstart Guide: Running the SME IDS App
+# Quick Start Guide: Running the SME IDS App
 
 This guide will teach you how to launch the natural-language Suricata GUI tool.
 
