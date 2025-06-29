@@ -1,5 +1,5 @@
 import json
-from flask import Flask, render_template, request, make_response, redirect, session
+from flask import Flask, render_template, request, make_response, redirect, session, url_for, flash
 import csv
 import io
 import sys
@@ -19,8 +19,10 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'scripts'))
 from rule_translator import translate_to_suricata, get_next_sid, RULES_FILE, save_rule_to_file
 
 app = Flask(__name__)
+app.secret_key = "8c22f0fb0d1288c1e99736ff9e104f8b"
 
 EVE_LOG_PATH = "/var/log/suricata/eve.json"
+RULES_FILE = "/etc/suricata/rules/my.rules"
 
 def map_severity(msg):
     msg = msg.lower()
@@ -96,6 +98,37 @@ def get_recent_alerts(limit=20):
             entry["local_time"] = ts  # fallback to raw string if all parsing fails
 
     return alerts
+
+def load_rules():
+    """Load Suricata rules as a list of strings."""
+    if not os.path.exists(RULES_FILE):
+        return[]
+    with open(RULES_FILE, "r") as f:
+        return [line.strip() for line in f if line.strip() and not line.startswith("#")]
+    
+def update_rule():
+    """Replace the rule with the given SID and increment rev number."""
+    rules = load_rules()
+    updated = False
+    sid_pattern = re.compile(r"sid\s*:\s*" + re.escape(str(sid)) + r"\s*;")
+
+    for i, rule in enumerate(rules):
+        if sid_pattern.search(rule):
+            # Bump revision
+            rev_match = re.search(r"rev\s*:\s*(\d+)\s*;"), new_rule)
+            if rev_match:
+                current_rev = int(rev_match.group(1))
+                new_rule = re.sub(r"rev\s*:\s*\d+\s*;", f"rev:{current_rev + 1};", new_rule)
+            else:
+                new_rule = new_rule.strip(";") + "; rev:1;"
+                rules[i] = new_rule
+                updated = True
+                break
+    
+    if updated:
+        with open(RULES_FILE, "w") as f:
+            f.write("\n".join(rules) + "\n")
+    return updated
 
 @app.route("/", methods=["GET"])
 def index_redirect():
@@ -214,7 +247,7 @@ def download_alerts():
     response.headers["Content-type"] = "text/csv"
     return response
 
-@app.route("/rules")
+@app.route("/rules", methods=["GET", "POST"])
 def view_rules():
     try:
         with open(RULES_FILE, "r") as f:
@@ -224,6 +257,29 @@ def view_rules():
     return render_template("rules.html", 
                            rules=rules,
                            active_page="rules")
+
+def rules():
+    if request.method == "POST":
+        sid = request.form.get("sid")
+        updated_rule = request.form.get("sid")
+        if sid and updated_rule:
+            success = update_rule(sid, updated_rule)
+            if success:
+                flash(f"Rule with SID {sid} updated and revision incremented.", "success")
+            else:
+                flash(f"Rule with SID {sid} not found.", "error")
+        return redirect(url_for("rules"))
+    
+    rule = load_rules()
+    parsed_rules = []
+    for rule in rules:
+        sid_match = re.search(r"sid\s*:\s*(\d+)", rule)
+        parsed_rules.append([
+            "sid": sid_match.group(1) if sid_match else "unknown",
+            "rule": rule
+        ])
+
+    return render_template("rules.html", rules=parsed_rules)
 
 @app.route("/faq")
 def faq():
