@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Current Suricata Rules</title>
+    <title>Suricata Rule Editor</title>
     <style id="theme-style">
         :root {
             --bg: #121212;
@@ -60,37 +60,48 @@
 
         .main {
             flex-grow: 1;
-            padding: 1.5rem 1.5rem 1rem 1.5rem;
+            padding: 1.5rem;
         }
 
         h1 {
-            margin: 0 0 1rem 0;
-            font-size: 1.5rem;
+            margin-top: 0;
         }
 
-        .rules-box {
+        .rule-block {
             background-color: var(--input-bg);
-            color: var(--input-text);
-            padding: 1rem;
-            border-radius: 5px;
+            padding: 10px;
             border: 1px solid #666;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            font-family: monospace;
+        }
+
+        textarea {
+            width: 100%;
+            background: var(--bg);
+            color: var(--text);
+            border: 1px solid #666;
+            padding: 8px;
             font-family: monospace;
             font-size: 1rem;
-            white-space: pre-wrap;
-            counter-reset: line;
-            line-height: 1.3;
-        }
-
-        .rules-box span {
             display: block;
-            counter-increment: line;
         }
 
-        .rules-box span::before {
-            content: counter(line) ". ";
-            display: inline-block;
-            width: 2.2em;
-            color: #888;
+        .button-row {
+            margin-top: 5px;
+        }
+
+        button {
+            background-color: var(--button-bg);
+            color: var(--button-text);
+            border: none;
+            padding: 6px 12px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        .alert {
+            color: var(--alert-color);
         }
 
         .theme-switch-wrapper {
@@ -173,12 +184,23 @@
 
         <!-- Main Content -->
         <div class="main">
-            <h1>📜 Current Suricata Rules</h1>
-            <div class="rules-box">
-                {% for line in rules.splitlines() %}
-                    <span>{{ line }}</span>
-                {% endfor %}
-            </div>
+            <h1>Edit Suricata Rules</h1>
+
+            {% if alert %}
+                <div class="alert">{{ alert }}</div>
+            {% endif %}
+
+            {% for rule, sid in rules %}
+                <form method="POST" action="/rules">
+                    <div class="rule-block">
+                        <textarea name="updated_rule" rows="2">{{ rule }}</textarea>
+                        <input type="hidden" name="original_sid" value="{{ sid }}">
+                        <div class="button-row">
+                            <button type="submit">Save</button>
+                        </div>
+                    </div>
+                </form>
+            {% endfor %}
         </div>
     </div>
 </body>
