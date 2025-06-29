@@ -22,7 +22,7 @@ app = Flask(__name__)
 app.secret_key = "8c22f0fb0d1288c1e99736ff9e104f8b"
 
 EVE_LOG_PATH = "/var/log/suricata/eve.json"
-RULES_FILE = "/etc/suricata/rules/my.rules"
+RULES_FILE = os.path.expanduser("~/suricata_nl_gui/rules/my.rules")
 
 def map_severity(msg):
     msg = msg.lower()
@@ -256,26 +256,28 @@ def download_alerts():
 
 @app.route("/rules", methods=["GET", "POST"])
 def rules():
+    saved_sid = None
+
     if request.method == "POST":
         sid = request.form.get("original_sid")
         updated_rule = request.form.get("updated_rule")
-
         if sid and updated_rule:
             success = update_rule(sid, updated_rule)
             if success:
-                flash(f"Rule with SID {sid} updated and revision incremented.", "success")
+                saved_sid = sid
             else:
                 flash(f"Rule with SID {sid} not found.", "error")
-        return redirect(url_for("rules"))
+        return redirect(url_for("rules", saved=saved_sid) if saved_sid else url_for("rules"))
 
-    rule_lines = load_rules()
     parsed_rules = []
-
-    for rule in rule_lines:
+    for rule in load_rules():
         sid_match = re.search(r"sid\s*:\s*(\d+)", rule)
-        parsed_rules.append((rule, sid_match.group(1) if sid_match else "unknown"))
+        parsed_rules.append({
+            "sid": sid_match.group(1) if sid_match else "unknown",
+            "rule": rule
+        })
 
-    return render_template("rules.html", rules=parsed_rules, active_page="rules")
+    return render_template("rules.html", rules=parsed_rules, saved_sid=request.args.get("saved"))
 
 @app.route("/faq")
 def faq():
