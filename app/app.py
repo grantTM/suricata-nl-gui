@@ -9,6 +9,8 @@ from datetime import datetime
 import pytz
 import re
 import logging
+import tempfile
+import subprocess
 
 # Configure logging
 logging.basicConfig(filename='app.log',
@@ -107,35 +109,51 @@ def load_rules():
         return [line.strip() for line in f if line.strip() and not line.startswith("#")]
     
 def update_rule(sid, new_rule):
-    """Replace the rule with the given SID and increment its rev number."""
+    """Replace the rule with the given SID and increment rev number if the updated rule is valid."""
     rules = load_rules()
     updated = False
     sid_pattern = re.compile(r"sid\s*:\s*" + re.escape(str(sid)) + r"\s*;")
 
     for i, rule in enumerate(rules):
         if sid_pattern.search(rule):
-            # Bump the rev number if present
-            rev_match = re.search(r"rev\s*:\s*(\d+)\s*;", rule)
+            # Increment rev if present
+            rev_match = re.search(r"rev\s*:\s*(\d+)", new_rule)
             if rev_match:
                 current_rev = int(rev_match.group(1))
-                # Replace just the rev number
-                new_rule = re.sub(r"rev\s*:\s*\d+\s*;", f"rev:{current_rev + 1};", new_rule)
+                new_rule = re.sub(r"rev\s*:\s*\d+", f"rev:{current_rev + 1}", new_rule)
             else:
-                # If no rev exists, append one
-                if new_rule.strip().endswith(";"):
-                    new_rule = new_rule.strip() + " rev:1;"
-                else:
-                    new_rule = new_rule.strip() + "; rev:1;"
-
+                # If rev is missing, add it
+                new_rule = new_rule.rstrip(";") + "; rev:1;"
             rules[i] = new_rule
             updated = True
             break
 
-    if updated:
+    if not updated:
+        return False, "Rule with given SID not found."
+
+    # Write to a temp file for validation
+    with tempfile.NamedTemporaryFile("w", delete=False) as temp_rules:
+        temp_rules.write("\n".join(rules) + "\n")
+        temp_rules_path = temp_rules.name
+
+    # Validate rules using Suricata -T
+    try:
+        result = subprocess.run(
+            ["suricata", "-T", "-c", "/etc/suricata/suricata.yaml", "-S", temp_rules_path],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=True
+        )
+    except subprocess.CalledProcessError as e:
+        return False, f"Rule validation failed: {e.stderr.decode() or e.stdout.decode()}"
+
+    # If validation passed, overwrite the real rules file
+    try:
         with open(RULES_FILE, "w") as f:
             f.write("\n".join(rules) + "\n")
-
-    return updated
+        return True, "Rule saved successfully."
+    except Exception as e:
+        return False, f"Failed to save rule: {str(e)}"
 
 @app.route("/", methods=["GET"])
 def index_redirect():
@@ -262,7 +280,12 @@ def rules():
         sid = request.form.get("original_sid")
         updated_rule = request.form.get("updated_rule")
         if sid and updated_rule:
-            success = update_rule(sid, updated_rule)
+            success, message = update_rule(sid, updated_rule)
+            if success:
+                flash(message, "success")
+            else:
+                flash(message, "error")
+
             if success:
                 saved_sid = sid
             else:
