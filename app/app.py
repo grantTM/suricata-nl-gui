@@ -106,28 +106,35 @@ def load_rules():
     with open(RULES_FILE, "r") as f:
         return [line.strip() for line in f if line.strip() and not line.startswith("#")]
     
-def update_rule():
-    """Replace the rule with the given SID and increment rev number."""
+def update_rule(sid, new_rule):
+    """Replace the rule with the given SID and increment its rev number."""
     rules = load_rules()
     updated = False
     sid_pattern = re.compile(r"sid\s*:\s*" + re.escape(str(sid)) + r"\s*;")
 
     for i, rule in enumerate(rules):
         if sid_pattern.search(rule):
-            # Bump revision
-            rev_match = re.search(r"rev\s*:\s*(\d+)\s*;", new_rule)
+            # Bump the rev number if present
+            rev_match = re.search(r"rev\s*:\s*(\d+)\s*;", rule)
             if rev_match:
                 current_rev = int(rev_match.group(1))
+                # Replace just the rev number
                 new_rule = re.sub(r"rev\s*:\s*\d+\s*;", f"rev:{current_rev + 1};", new_rule)
             else:
-                new_rule = new_rule.strip(";") + "; rev:1;"
-                rules[i] = new_rule
-                updated = True
-                break
-    
+                # If no rev exists, append one
+                if new_rule.strip().endswith(";"):
+                    new_rule = new_rule.strip() + " rev:1;"
+                else:
+                    new_rule = new_rule.strip() + "; rev:1;"
+
+            rules[i] = new_rule
+            updated = True
+            break
+
     if updated:
         with open(RULES_FILE, "w") as f:
             f.write("\n".join(rules) + "\n")
+
     return updated
 
 @app.route("/", methods=["GET"])
@@ -250,8 +257,9 @@ def download_alerts():
 @app.route("/rules", methods=["GET", "POST"])
 def rules():
     if request.method == "POST":
-        sid = request.form.get("sid")
-        updated_rule = request.form.get("sid")
+        sid = request.form.get("original_sid")
+        updated_rule = request.form.get("updated_rule")
+
         if sid and updated_rule:
             success = update_rule(sid, updated_rule)
             if success:
@@ -259,17 +267,15 @@ def rules():
             else:
                 flash(f"Rule with SID {sid} not found.", "error")
         return redirect(url_for("rules"))
-    
-    rule = load_rules()
-    parsed_rules = []
-    for rule in rules:
-        sid_match = re.search(r"sid\s*:\s*(\d+)", rule)
-        parsed_rules.append({
-            "sid": sid_match.group(1) if sid_match else "unknown",
-            "rule": rule
-        })
 
-    return render_template("rules.html", rules=parsed_rules)
+    rule_lines = load_rules()
+    parsed_rules = []
+
+    for rule in rule_lines:
+        sid_match = re.search(r"sid\s*:\s*(\d+)", rule)
+        parsed_rules.append((rule, sid_match.group(1) if sid_match else "unknown"))
+
+    return render_template("rules.html", rules=parsed_rules, active_page="rules")
 
 @app.route("/faq")
 def faq():
