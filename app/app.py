@@ -264,10 +264,10 @@ def rules():
     parsed_rules = []
     for rule in rules:
         sid_match = re.search(r"sid\s*:\s*(\d+)", rule)
-        parsed_rules.append([
+        parsed_rules.append({
             "sid": sid_match.group(1) if sid_match else "unknown",
             "rule": rule
-        ])
+        })
 
     return render_template("rules.html", rules=parsed_rules)
 
