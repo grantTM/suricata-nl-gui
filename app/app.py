@@ -115,7 +115,7 @@ def update_rule():
     for i, rule in enumerate(rules):
         if sid_pattern.search(rule):
             # Bump revision
-            rev_match = re.search(r"rev\s*:\s*(\d+)\s*;"), new_rule)
+            rev_match = re.search(r"rev\s*:\s*(\d+)\s*;", new_rule)
             if rev_match:
                 current_rev = int(rev_match.group(1))
                 new_rule = re.sub(r"rev\s*:\s*\d+\s*;", f"rev:{current_rev + 1};", new_rule)
@@ -248,16 +248,6 @@ def download_alerts():
     return response
 
 @app.route("/rules", methods=["GET", "POST"])
-def view_rules():
-    try:
-        with open(RULES_FILE, "r") as f:
-            rules = f.read()
-    except Exception as e:
-        rules = f"Error reading rules file: {e}"
-    return render_template("rules.html", 
-                           rules=rules,
-                           active_page="rules")
-
 def rules():
     if request.method == "POST":
         sid = request.form.get("sid")
