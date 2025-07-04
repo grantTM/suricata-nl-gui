@@ -190,20 +190,21 @@
                 <div class="alert">{{ alert }}</div>
             {% endif %}
 
-            {% for rule_obj in rules %}
+            {% for rule in rules %}
                 <form method="POST" action="/rules">
                     <div class="rule-block">
-                        <textarea name="updated_rule" rows="2">{{ rule_obj.rule }}</textarea>
-                        <input type="hidden" name="original_sid" value="{{ rule_obj.sid }}">
+                        <textarea name="updated_rule" rows="2">{{ rule.rule }}</textarea>
+                        <input type="hidden" name="original_sid" value="{{ rule.sid }}">
                         <div class="button-row">
                             <button type="submit">Save</button>
-                            {% if saved_sid == rule_obj.sid %}
-                                <span style="color: lightgreen; font-size: 0.9em;">✔ Saved!</span>
+                            {% if saved_sid == rule.sid %}
+                                <span style="color: lime;">✅ Saved!</span>
                             {% endif %}
                         </div>
                     </div>
                 </form>
             {% endfor %}
+
         </div>
     </div>
 </body>
