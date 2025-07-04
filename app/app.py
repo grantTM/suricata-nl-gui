@@ -318,16 +318,14 @@ def examples():
 def glossary():
     return render_template("glossary.html", active_page="glossary")
 
-if __name__ == "__main__":
-    app.run(debug=True, host='0.0.0.0', port=5000)
-
 @app.route("/run-pcap", methods=["POST"])
-def run_pcap_replay():
+def run_pcap():
     try:
         ip_address = request.remote_addr
-        timestamp = datetime.datetime.now().isoformat()
+        timestamp = datetime.now().isoformat()
+
         command = [
-            "sudo", "tcpreplay",
+            "tcpreplay",
             "-i", "eth1",
             "/home/grantfitz/suricata_nl_gui/scripts/suricata_rules_test.pcap"
         ]
@@ -342,7 +340,12 @@ def run_pcap_replay():
             error = f"PCAP replay failed: {result.stderr.strip()}"
             pcap_logger.error(f"{timestamp} - {ip_address} - {error}")
             return jsonify({"status": "error", "message": error}), 500
-        
+
     except Exception as e:
-        pcap_logger.exception(f"{timestamp} - {ip_address} - Unexpected error during PCAP replay")
+        fallback_ip = request.remote_addr if "request" in locals() else "unknown"
+        fallback_time = datetime.now().isoformat()
+        pcap_logger.exception(f"{fallback_time} - {fallback_ip} - Unexpected error during PCAP replay")
         return jsonify({"status": "error", "message": "An unexpected error occurred."}), 500
+
+if __name__ == "__main__":
+    app.run(debug=True, host='0.0.0.0', port=5000)
