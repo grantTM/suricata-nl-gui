@@ -212,6 +212,32 @@
                 </form>
             </div>
 
+            <form id="pcap-replay-form" method="POST" action="/run-pcap" onsubmit="return runPcapReplay(event);">
+                <button type="submit" class="btn btn-secondary" style="margin-top: 10px;">
+                    Run Test PCAP
+                </button>
+            </form>
+
+            <div id="pcap-status" style="margin-top: 10px;"></div>
+
+            <script>
+                function runPcapReplay(event) {
+                    event.preventDefault();
+
+                    fetch("/run-pcap", {
+                        method: "POST"
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        const statusBox = document.getElementById("pcap-status");
+                        statusBox.innerText = data.message;
+                        statusBox.style.color = data.status === "success" ? "green" : "red";
+                    })
+
+                    return false;
+                }
+            </script>
+
             {% for alert in alerts %}
                 <div class="alert-card alert-entry {{ alert.severity | lower }}">
                     <p><strong>Timestamp:</strong> {{ alert.local_time }}</p>

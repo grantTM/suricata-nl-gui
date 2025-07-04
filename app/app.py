@@ -1,5 +1,5 @@
 import json
-from flask import Flask, render_template, request, make_response, redirect, session, url_for, flash
+from flask import Flask, render_template, request, make_response, redirect, session, url_for, flash, jsonify
 import csv
 import io
 import sys
@@ -16,6 +16,18 @@ import subprocess
 logging.basicConfig(filename='app.log',
                     level=logging.INFO,
                     format='%(asctime)s %(levelname)s: %(message)s')
+
+# Create a named logger for PCAP replays
+pcap_logger = logging.getLogger("pcap_replay")
+pcap_logger.setLevel(logging.INFO)
+# Create file handler for replay logs
+replay_handler = logging.FileHandler("pcap_replay.log")
+replay_handler.setLevel(logging.INFO)
+# Set formatter
+formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+replay_handler.setFormatter(formatter)
+# Add handler to logger
+pcap_logger.addHandler(replay_handler)
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'scripts'))
 from rule_translator import translate_to_suricata, get_next_sid, RULES_FILE, save_rule_to_file
@@ -109,20 +121,17 @@ def load_rules():
         return [line.strip() for line in f if line.strip() and not line.startswith("#")]
     
 def update_rule(sid, new_rule):
-    """Replace the rule with the given SID and increment rev number if the updated rule is valid."""
+    """Replace the rule with the given SID and increment rev number if valid."""
     rules = load_rules()
     updated = False
     sid_pattern = re.compile(r"sid\s*:\s*" + re.escape(str(sid)) + r"\s*;")
 
     for i, rule in enumerate(rules):
         if sid_pattern.search(rule):
-            # Increment rev if present
-            rev_match = re.search(r"rev\s*:\s*(\d+)", new_rule)
-            if rev_match:
-                current_rev = int(rev_match.group(1))
-                new_rule = re.sub(r"rev\s*:\s*\d+", f"rev:{current_rev + 1}", new_rule)
+            # Handle rev increment
+            if "rev:" in new_rule:
+                new_rule = re.sub(r"rev\s*:\s*(\d+)", lambda m: f"rev:{int(m.group(1)) + 1}", new_rule)
             else:
-                # If rev is missing, add it
                 new_rule = new_rule.rstrip(";") + "; rev:1;"
             rules[i] = new_rule
             updated = True
@@ -131,14 +140,13 @@ def update_rule(sid, new_rule):
     if not updated:
         return False, "Rule with given SID not found."
 
-    # Write to a temp file for validation
+    # Validate with temp file
     with tempfile.NamedTemporaryFile("w", delete=False) as temp_rules:
         temp_rules.write("\n".join(rules) + "\n")
         temp_rules_path = temp_rules.name
 
-    # Validate rules using Suricata -T
     try:
-        result = subprocess.run(
+        subprocess.run(
             ["suricata", "-T", "-c", "/etc/suricata/suricata.yaml", "-S", temp_rules_path],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -147,7 +155,7 @@ def update_rule(sid, new_rule):
     except subprocess.CalledProcessError as e:
         return False, f"Rule validation failed: {e.stderr.decode() or e.stdout.decode()}"
 
-    # If validation passed, overwrite the real rules file
+    # Save if validated
     try:
         with open(RULES_FILE, "w") as f:
             f.write("\n".join(rules) + "\n")
@@ -273,7 +281,9 @@ def download_alerts():
     return response
 
 @app.route("/rules", methods=["GET", "POST"])
+@app.route("/rules", methods=["GET", "POST"])
 def rules():
+    alert = None
     saved_sid = None
 
     if request.method == "POST":
@@ -281,17 +291,11 @@ def rules():
         updated_rule = request.form.get("updated_rule")
         if sid and updated_rule:
             success, message = update_rule(sid, updated_rule)
-            if success:
-                flash(message, "success")
-            else:
-                flash(message, "error")
-
+            alert = message
             if success:
                 saved_sid = sid
-            else:
-                flash(f"Rule with SID {sid} not found.", "error")
-        return redirect(url_for("rules", saved=saved_sid) if saved_sid else url_for("rules"))
 
+    # Always reload rules from file after save
     parsed_rules = []
     for rule in load_rules():
         sid_match = re.search(r"sid\s*:\s*(\d+)", rule)
@@ -300,7 +304,7 @@ def rules():
             "rule": rule
         })
 
-    return render_template("rules.html", rules=parsed_rules, saved_sid=request.args.get("saved"))
+    return render_template("rules.html", rules=parsed_rules, saved_sid=saved_sid, alert=alert)
 
 @app.route("/faq")
 def faq():
@@ -316,3 +320,29 @@ def glossary():
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=5000)
+
+@app.route("/run-pcap", methods=["POST"])
+def run_pcap_replay():
+    try:
+        ip_address = request.remote_addr
+        timestamp = datetime.datetime.now().isoformat()
+        command = [
+            "sudo", "tcpreplay",
+            "-i", "eth1",
+            "/home/grantfitz/suricata_nl_gui/scripts/suricata_rules_test.pcap"
+        ]
+
+        result = subprocess.run(command, capture_output=True, text=True)
+
+        if result.returncode == 0:
+            message = "PCAP replay succeeded"
+            pcap_logger.info(f"{timestamp} - {ip_address} - {message}")
+            return jsonify({"status": "success", "message": message})
+        else:
+            error = f"PCAP replay failed: {result.stderr.strip()}"
+            pcap_logger.error(f"{timestamp} - {ip_address} - {error}")
+            return jsonify({"status": "error", "message": error}), 500
+        
+    except Exception as e:
+        pcap_logger.exception(f"{timestamp} - {ip_address} - Unexpected error during PCAP replay")
+        return jsonify({"status": "error", "message": "An unexpected error occurred."}), 500
