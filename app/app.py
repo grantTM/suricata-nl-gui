@@ -31,6 +31,12 @@ replay_handler.setLevel(logging.INFO)
 replay_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
 pcap_logger.addHandler(replay_handler)
 
+feedback_logger = logging.getLogger("feedback")
+feedback_handler = logging.FileHandler(os.path.join(LOG_DIR, "feedback.log"))
+feedback_handler.setFormatter(logging.Formatter("%(asctime)s - %(message)s"))
+feedback_logger.addHandler(feedback_handler)
+feedback_logger.setLevel(logging.INFO)
+
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'scripts'))
 from rule_translator import translate_to_suricata, get_next_sid, RULES_FILE, save_rule_to_file
 
@@ -390,7 +396,7 @@ def feedback():
     if request.method == "POST":
         rating = request.form.get("rating")
         comments = request.form.get("comments", "")
-        logging.info(f"User feedback - Rating: {rating}, Comments: {comments}")
+        feedback_logger.info(f"User feedback - Rating: {rating}, Comments: {comments}")
         flash("Thanks for your feedback!", "info")
         return redirect(url_for("feedback"))
 

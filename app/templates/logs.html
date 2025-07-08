@@ -13,6 +13,62 @@
             document.documentElement.style.setProperty('--button-text', '#000');
         }
     })();
+
+    function toggleAlert(headerEl) {
+        const card = headerEl.closest(".alert-card");
+        const sidKey = card.dataset.sid;
+
+        card.classList.toggle("expanded");
+
+        // Store toggle state
+        const expanded = card.classList.contains("expanded");
+        localStorage.setItem("alert_" + sidKey, expanded ? "1" : "0");
+
+        headerEl.querySelector(".toggle-indicator").textContent = expanded ? "▲" : "▼";
+    }
+
+    function applyStoredAlertStates() {
+        document.querySelectorAll(".alert-card").forEach(card => {
+            const sidKey = card.dataset.sid;
+            const isExpanded = localStorage.getItem("alert_" + sidKey) === "1";
+            if (isExpanded) {
+                card.classList.add("expanded");
+                const indicator = card.querySelector(".toggle-indicator");
+                if (indicator) indicator.textContent = "▲";
+            }
+        });
+    }
+
+    function renderTimeAgo() {
+        const now = new Date();
+        document.querySelectorAll(".time-ago").forEach(span => {
+            const timestamp = span.dataset.timestamp;
+            if (!timestamp) return;
+
+            const ts = new Date(timestamp);
+            const diffMs = now - ts;
+            const minutes = Math.floor(diffMs / 60000);
+            const hours = Math.floor(minutes / 60);
+            const days = Math.floor(hours / 24);
+
+            let timeStr = "just now";
+            if (days > 0) {
+                timeStr = `${days} day${days > 1 ? "s" : ""} ago`;
+            } else if (hours > 0) {
+                const remMin = minutes % 60;
+                timeStr = `${hours} hour${hours > 1 ? "s" : ""}${remMin > 0 ? `, ${remMin} minute${remMin > 1 ? "s" : ""}` : ""} ago`;
+            } else if (minutes > 0) {
+                timeStr = `${minutes} minute${minutes > 1 ? "s" : ""} ago`;
+            }
+
+            span.textContent = timeStr;
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        applyStoredAlertStates();
+        renderTimeAgo();
+    });
     </script>
 
     <title>Recent Suricata Alerts</title>
@@ -100,6 +156,21 @@
             padding: 2rem;
         }
 
+        .alert-header {
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .toggle-icon {
+            transition: transform 0.2s ease;
+        }
+        
+        .alert-card.expanded .toggle-icon {
+            transform: rotate(90deg);
+        }
+
         .alert-box {
             background: var(--input-bg);
             padding: 1rem;
@@ -130,6 +201,26 @@
 
         .alert-card.low {
             border-left-color: #27ae60; /* green */
+        }
+
+        .alert-title {
+            text-align: left;
+            font-weight: bold;
+            flex-grow: 1;
+        }
+
+        .alert-details {
+            display: none;
+            padding-top: 10px;
+        }
+
+        .alert-card.expanded .alert-details {
+            display: block;
+        }
+
+        .toggle-indicator {
+            margin-left: auto;
+            font-weight: bold;
         }
 
         .theme-switch-wrapper {
@@ -292,14 +383,21 @@
             <div id="pcap-status" style="margin-top: 10px;"></div>
 
             {% for alert in alerts %}
-                <div class="alert-card alert-entry {{ alert.severity | lower }}">
+            <div class="alert-card alert-entry {{ alert.severity | lower }}" data-sid="{{ alert.alert.signature | replace(' ', '_') }}">
+                <div class="alert-header" onclick="toggleAlert(this)">
+                    <span class="alert-title">
+                        {{ alert.alert.signature }} – <span class="time-ago" data-timestamp="{{ alert.timestamp }}"></span>
+                    </span>
+                    <span class="toggle-indicator">▼</span>
+                </div>
+                <div class="alert-details">
                     <p><strong>Timestamp:</strong> {{ alert.local_time }}</p>
                     <p><strong>Source IP:</strong> {{ alert.src_ip }}</p>
                     <p><strong>Destination IP:</strong> {{ alert.dest_ip }}</p>
                     <p><strong>Protocol:</strong> {{ alert.proto }}</p>
-                    <p><strong>Alert:</strong> {{ alert.alert.signature }}</p>
                     <p><strong>Severity:</strong> {{ alert.severity }}</p>
                 </div>
+            </div>
             {% endfor %}
         </div>
     </div>
@@ -383,7 +481,18 @@
             input.addEventListener("input", filterAlerts);
         }
 
-        window.onload = loadSearch;
+        window.addEventListener("DOMContentLoaded", () => {
+            const savedTheme = localStorage.getItem("theme");
+            if (savedTheme === "light") {
+                applyLightMode();
+            } else {
+                toggle.checked = false;
+            }
+        
+            applyStoredAlertStates();
+            renderTimeAgo();
+            loadSearch();
+        });
     </script>
 </body>
 </html>
