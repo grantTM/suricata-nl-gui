@@ -396,6 +396,28 @@
                     <p><strong>Destination IP:</strong> {{ alert.dest_ip }}</p>
                     <p><strong>Protocol:</strong> {{ alert.proto }}</p>
                     <p><strong>Severity:</strong> {{ alert.severity }}</p>
+                    {% if alert.alert.signature_id == 1000005 and alert.http %}
+                        <p><strong>SQLi:</strong>
+                            {% if alert.http.url %}
+                                {{ alert.http.url }}
+                            {% elif alert.http.hostname and alert.http.uri %}
+                                http://{{ alert.http.hostname }}{{ alert.http.uri }}
+                            {% else %}
+                                (URL not available)
+                            {% endif %}
+                        </p>
+                    {% endif %}
+                    {% if alert.alert.signature_id == 1000007 and alert.http %}
+                        <p><strong>File Path:</strong>
+                            {% if alert.http.url %}
+                                {{ alert.http.url }}
+                            {% elif alert.http.hostname and alert.http.uri %}
+                                http://{{ alert.http.hostname }}{{ alert.http.uri }}
+                            {% else %}
+                                (URL not available)
+                            {% endif %}
+                        </p>
+                    {% endif %}
                 </div>
             </div>
             {% endfor %}
