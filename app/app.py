@@ -12,21 +12,23 @@ import logging
 import tempfile
 import subprocess
 
-# Configure logging
-logging.basicConfig(filename='app.log',
-                    level=logging.INFO,
-                    format='%(asctime)s %(levelname)s: %(message)s')
+# Set up logging directory
+LOG_DIR = os.path.expanduser("/home/grantfitz/suricata_nl_gui/logs/")
+os.makedirs(LOG_DIR, exist_ok=True)
 
-# Create a named logger for PCAP replays
+# Main app logger
+logging.basicConfig(
+    filename=os.path.join(LOG_DIR, "app.log"),
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s: %(message)s'
+)
+
+# PCAP replay logger
 pcap_logger = logging.getLogger("pcap_replay")
 pcap_logger.setLevel(logging.INFO)
-# Create file handler for replay logs
-replay_handler = logging.FileHandler("pcap_replay.log")
+replay_handler = logging.FileHandler(os.path.join(LOG_DIR, "pcap_replay.log"))
 replay_handler.setLevel(logging.INFO)
-# Set formatter
-formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-replay_handler.setFormatter(formatter)
-# Add handler to logger
+replay_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
 pcap_logger.addHandler(replay_handler)
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'scripts'))
@@ -36,7 +38,7 @@ app = Flask(__name__)
 app.secret_key = "8c22f0fb0d1288c1e99736ff9e104f8b"
 
 EVE_LOG_PATH = "/var/log/suricata/eve.json"
-RULES_FILE = os.path.expanduser("~/suricata_nl_gui/rules/my.rules")
+RULES_FILE = os.path.expanduser("/home/grantfitz/suricata_nl_gui/rules/my.rules")
 
 def map_severity(msg):
     msg = msg.lower()
@@ -116,9 +118,12 @@ def get_recent_alerts(limit=20):
 def load_rules():
     """Load Suricata rules as a list of strings."""
     if not os.path.exists(RULES_FILE):
-        return[]
+        logging.error(f"Rules file not found: {RULES_FILE}")
+        return []
     with open(RULES_FILE, "r") as f:
-        return [line.strip() for line in f if line.strip() and not line.startswith("#")]
+        lines = [line.strip() for line in f if line.strip() and not line.startswith("#")]
+        logging.info(f"Loaded {len(lines)} rules from {RULES_FILE}")
+        return lines
     
 def update_rule(sid, new_rule):
     """Replace the rule with the given SID and increment rev number if valid."""
@@ -135,6 +140,7 @@ def update_rule(sid, new_rule):
                 new_rule = new_rule.rstrip(";") + "; rev:1;"
             rules[i] = new_rule
             updated = True
+            logging.info("Rule with SID %s updated to: %s", sid, new_rule)
             break
 
     if not updated:
@@ -145,15 +151,21 @@ def update_rule(sid, new_rule):
         temp_rules.write("\n".join(rules) + "\n")
         temp_rules_path = temp_rules.name
 
+    temp_log_dir = tempfile.mkdtemp()
+    # Validate with temp file
+    temp_log_dir = tempfile.mkdtemp()
+
     try:
         subprocess.run(
-            ["suricata", "-T", "-c", "/etc/suricata/suricata.yaml", "-S", temp_rules_path],
+            ["suricata", "-T", "-c", "/etc/suricata/suricata.yaml",
+             "-S", temp_rules_path,
+             "--set", f"default-log-dir={temp_log_dir}"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             check=True
         )
     except subprocess.CalledProcessError as e:
-        return False, f"Rule validation failed: {e.stderr.decode() or e.stdout.decode()}"
+        return False, "Rule validation failed: {}".format(e.stderr.decode() or e.stdout.decode())
 
     # Save if validated
     try:
@@ -229,9 +241,14 @@ def confirm_rule():
 
 @app.route("/logs")
 def view_logs():
-    alerts = get_recent_alerts()
+    sort = request.args.get("sort", "time")
+    limit = int(request.args.get("limit", 100))  # Prep for step 2
+    alerts = get_recent_alerts(limit)
 
-    # Summary statistics
+    if sort == "severity":
+        severity_order = {"High": 0, "Medium": 1, "Low": 2}
+        alerts.sort(key=lambda a: severity_order.get(a.get("severity", "Low")))
+
     total_alerts = len(alerts)
     signatures = Counter(entry["alert"]["signature"] for entry in alerts if "alert" in entry)
     top_signatures = signatures.most_common(3)
@@ -252,7 +269,9 @@ def view_logs():
                         medium_count=medium_count,
                         low_count=low_count,
                         latest_alert_time=latest_alert_time,
-                        active_page="logs")
+                        active_page="logs",
+                        sort=sort,
+                        limit=limit)
                         
 @app.route("/download_alerts")
 def download_alerts():
@@ -281,7 +300,6 @@ def download_alerts():
     return response
 
 @app.route("/rules", methods=["GET", "POST"])
-@app.route("/rules", methods=["GET", "POST"])
 def rules():
     alert = None
     saved_sid = None
@@ -304,7 +322,31 @@ def rules():
             "rule": rule
         })
 
-    return render_template("rules.html", rules=parsed_rules, saved_sid=saved_sid, alert=alert)
+    logging.info(f"Parsed {len(parsed_rules)} rules for display")
+
+    return render_template("rules.html", rules=parsed_rules, saved_sid=saved_sid, alert=alert, active_page="rules")
+
+@app.route("/delete_rule", methods=["POST"])
+def delete_rule():
+    sid = request.form.get("sid")
+    if not sid:
+        flash("No SID provided for deletion.", "error")
+        return redirect(url_for("rules"))
+
+    rules = load_rules()
+    updated_rules = [r for r in rules if f"sid:{sid};" not in r]
+
+    if len(rules) == len(updated_rules):
+        flash("Rule not found or already deleted.", "error")
+    else:
+        try:
+            with open(RULES_FILE, "w") as f:
+                f.write("\n".join(updated_rules) + "\n")
+            flash(f"Rule with SID {sid} deleted successfully.", "success")
+        except Exception as e:
+            flash(f"Failed to delete rule: {e}", "error")
+
+    return redirect(url_for("rules"))
 
 @app.route("/faq")
 def faq():
@@ -324,11 +366,7 @@ def run_pcap():
         ip_address = request.remote_addr
         timestamp = datetime.now().isoformat()
 
-        command = [
-            "tcpreplay",
-            "-i", "eth1",
-            "/home/grantfitz/suricata_nl_gui/scripts/suricata_rules_test.pcap"
-        ]
+        command = ["sudo", "bash", "/home/grantfitz/suricata_nl_gui/scripts/pcap_generator.pcap.sh"]
 
         result = subprocess.run(command, capture_output=True, text=True)
 
@@ -346,6 +384,37 @@ def run_pcap():
         fallback_time = datetime.now().isoformat()
         pcap_logger.exception(f"{fallback_time} - {fallback_ip} - Unexpected error during PCAP replay")
         return jsonify({"status": "error", "message": "An unexpected error occurred."}), 500
+
+@app.route("/feedback", methods=["GET", "POST"])
+def feedback():
+    if request.method == "POST":
+        rating = request.form.get("rating")
+        comments = request.form.get("comments", "")
+        logging.info(f"User feedback - Rating: {rating}, Comments: {comments}")
+        flash("Thanks for your feedback!", "info")
+        return redirect(url_for("feedback"))
+
+    return render_template("feedback.html", active_page="feedback")
+
+@app.route("/restart-suricata", methods=["POST"])
+def restart_suricata():
+    try:
+        # Stop existing Suricata (no error if not running)
+        subprocess.run(["sudo", "pkill", "-f", "suricata"], check=False)
+
+        # Start Suricata on loopback (or eth1 if configured)
+        subprocess.run([
+            "sudo", "suricata",
+            "-i", "lo",  # Change to "eth1" if needed
+            "-c", "/etc/suricata/suricata.yaml",
+            "-l", "/var/log/suricata"
+        ], check=True)
+
+        flash("✅ Suricata restarted successfully.", "success")
+    except subprocess.CalledProcessError as e:
+        flash(f"⚠️ Failed to restart Suricata: {e}", "error")
+
+    return redirect(url_for("view_logs"))
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=5000)

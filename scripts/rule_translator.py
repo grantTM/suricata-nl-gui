@@ -2,7 +2,7 @@ import re
 import os
 import logging
 
-RULES_FILE = os.path.expanduser("~/suricata_nl_gui/rules/my.rules")
+RULES_FILE = os.path.expanduser("/home/grantfitz/suricata_nl_gui/rules/my.rules")
 SID_START = 1000001 # Starting SID range for custom rules
 
 def get_next_sid(filepath):

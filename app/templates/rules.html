@@ -92,14 +92,15 @@
         }
 
         button {
-            background-color: var(--button-bg);
-            color: var(--button-text);
-            border: none;
             padding: 6px 12px;
+            margin: 2px 0;
             cursor: pointer;
-            margin-right: 10px;
         }
-
+        
+        button[type="submit"][style*="background-color: #a00"] {
+            font-weight: bold;
+        }
+        
         .alert {
             color: var(--alert-color);
         }
@@ -168,6 +169,7 @@
                 <li><a href="/logs" class="{% if active_page == 'logs' %}active{% endif %}">Alerts</a></li>
                 <li><a href="/translate" class="{% if active_page == 'translate' %}active{% endif %}">Translator</a></li>
                 <li><a href="/rules" class="{% if active_page == 'rules' %}active{% endif %}">Rules</a></li>
+                <li><a href="/feedback" class="{% if active_page == 'feedback' %}active{% endif %}">Feedback</a></li>
             </ul>
 
             <div style="margin-top: 2rem;">
@@ -190,21 +192,85 @@
                 <div class="alert">{{ alert }}</div>
             {% endif %}
 
-            {% for rule in rules %}
-                <form method="POST" action="/rules">
-                    <div class="rule-block">
-                        <textarea name="updated_rule" rows="2">{{ rule.rule }}</textarea>
-                        <input type="hidden" name="original_sid" value="{{ rule.sid }}">
-                        <div class="button-row">
-                            <button type="submit">Save</button>
-                            {% if saved_sid == rule.sid %}
-                                <span style="color: lime;">✅ Saved!</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                </form>
-            {% endfor %}
+            <table id="rule-table" style="width:100%; border-collapse: collapse; margin-top: 1rem;">
+                <thead>
+                    <tr class="table-header">
+                        <th style="padding: 10px; border: 1px solid #444;">#</th>
+                        <th style="padding: 10px; border: 1px solid #444;">SID</th>
+                        <th style="padding: 10px; border: 1px solid #444;">Rule</th>
+                        <th style="padding: 10px; border: 1px solid #444;">Edit</th>
+                        <th style="padding: 10px; border: 1px solid #444;">Delete</th>
+                    </tr>
+                </thead>
 
+                <tbody>
+                    {% for rule in rules %}
+                    <tr>
+                        <td style="text-align: center;">{{ loop.index }}</td>
+                        <td style="text-align: center;">{{ rule.sid }}</td>
+                        <td>
+                            <textarea name="updated_rule" rows="2" class="rule-textarea" readonly>{{ rule.rule }}</textarea>
+                        </td>
+                    
+                        <!-- Edit Column -->
+                        <td style="text-align: center;">
+                            <form method="POST" action="/rules" class="rule-form">
+                                <input type="hidden" name="original_sid" value="{{ rule.sid }}">
+                                <input type="hidden" name="updated_rule" class="hidden-rule-input" value="{{ rule.rule }}">
+                                <button type="button" class="edit-btn">Edit</button>
+                                {% if saved_sid == rule.sid %}
+                                    <span style="color: lime;">✅</span>
+                                {% endif %}
+                            </form>
+                        </td>
+                    
+                        <!-- Delete Column -->
+                        <td style="text-align: center;">
+                            <form method="POST" action="/delete_rule" onsubmit="return confirm('Delete this rule?');">
+                                <input type="hidden" name="sid" value="{{ rule.sid }}">
+                                <button type="submit" style="background-color: #a00; color: white;">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                console.log("Script loaded");
+            
+                document.querySelectorAll('.edit-btn').forEach(button => {
+                    button.addEventListener('click', () => {
+                        const tr = button.closest('tr');
+                        const textarea = tr.querySelector('.rule-textarea');
+                        const hiddenInput = tr.querySelector('.hidden-rule-input');
+                        const form = button.closest('form');
+                    
+                        if (button.textContent === 'Edit') {
+                            textarea.removeAttribute('readonly');
+                            textarea.focus();
+                            button.textContent = 'Save';
+                        } else {
+                            hiddenInput.value = textarea.value;
+                            form.submit();
+                        }
+                    });
+                });
+            
+                // Theme header fix
+                const theme = localStorage.getItem("theme");
+                const header = document.querySelector(".table-header");
+                if (theme === "light") {
+                    header.style.backgroundColor = "#f5f5f5";
+                    header.style.color = "#222";
+                } else {
+                    header.style.backgroundColor = "#1e1e1e";
+                    header.style.color = "#fff";
+                }
+            });
+            </script>
         </div>
     </div>
 </body>

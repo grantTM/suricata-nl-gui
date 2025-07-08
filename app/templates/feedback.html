@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script>
+    (function() {
+        const theme = localStorage.getItem("theme");
+        if (theme === "light") {
+            document.documentElement.style.setProperty('--bg', '#fff');
+            document.documentElement.style.setProperty('--text', '#000');
+            document.documentElement.style.setProperty('--input-bg', '#f5f5f5');
+            document.documentElement.style.setProperty('--input-text', '#000');
+            document.documentElement.style.setProperty('--button-bg', '#ccc');
+            document.documentElement.style.setProperty('--button-text', '#000');
+        }
+    })();
+    </script>
+
+    <title>Rate the App</title>
+    <style id="theme-style">
+        :root {
+            --bg: #121212;
+            --text: #eee;
+            --input-bg: #1e1e1e;
+            --input-text: #fff;
+            --button-bg: #444;
+            --button-text: #fff;
+            --alert-color: red;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .layout {
+            display: flex;
+        }
+
+        nav {
+            width: 220px;
+            padding: 1rem;
+            background: var(--input-bg);
+            border-right: 1px solid #444;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        nav ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        nav ul li {
+            margin-bottom: 1rem;
+        }
+
+        nav a {
+            color: var(--text);
+            text-decoration: none;
+        }
+
+        nav a.active {
+            font-weight: bold;
+            color: #f39c12;
+            border-left: 4px solid #f39c12;
+            padding-left: 8px;
+        }
+
+        .main {
+            flex-grow: 1;
+            padding: 1.5rem;
+        }
+
+        label, select, button {
+            display: block;
+            margin-bottom: 1rem;
+        }
+
+        select, button {
+            padding: 0.5rem;
+            background: var(--input-bg);
+            color: var(--input-text);
+            border: 1px solid #666;
+        }
+
+        .alert {
+            color: var(--alert-color);
+        }
+
+        .flashes {
+            list-style: none;
+            padding: 0;
+        }
+
+        .flashes li {
+            margin-top: 10px;
+        }
+
+        .theme-switch-wrapper {
+            margin-top: 2rem;
+        }
+
+        .theme-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .theme-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            background-color: #888;
+            border-radius: 34px;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            transition: 0.4s;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "🌗";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 3px;
+            background-color: white;
+            border-radius: 50%;
+            transition: 0.4s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        input:checked + .slider {
+            background-color: #444;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+            content: "☀️";
+        }
+    </style>
+</head>
+<body>
+<div class="layout">
+    <nav>
+        <h3>Navigation</h3>
+        <ul>
+            <li><a href="/logs" class="{% if active_page == 'logs' %}active{% endif %}">Alerts</a></li>
+            <li><a href="/translate" class="{% if active_page == 'translate' %}active{% endif %}">Translator</a></li>
+            <li><a href="/rules" class="{% if active_page == 'rules' %}active{% endif %}">Rules</a></li>
+            <li><a href="/feedback" class="{% if active_page == 'feedback' %}active{% endif %}">Feedback</a></li>
+        </ul>
+        {% include 'theme.html' %}
+    </nav>
+
+    <div class="main">
+        <h1>Rate This App</h1>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul class="flashes">
+            {% for category, message in messages %}
+                <li class="{{ category }}">{{ message }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+            <label for="rating">How would you rate your experience?</label>
+            <select id="rating" name="rating" required>
+                <option value="">Choose...</option>
+                <option value="5">⭐️⭐️⭐️⭐️⭐️ Excellent</option>
+                <option value="4">⭐️⭐️⭐️⭐️ Good</option>
+                <option value="3">⭐️⭐️⭐️ Okay</option>
+                <option value="2">⭐️⭐️ Poor</option>
+                <option value="1">⭐️ Terrible</option>
+            </select>
+        
+            <label for="comments">Any additional feedback?</label>
+            <textarea id="comments" name="comments" rows="4" style="width:100%; padding: 0.5rem; background: var(--input-bg); color: var(--input-text); border: 1px solid #666;"></textarea>
+            <br></br>
+            <button type="submit" style = "padding: 0.5rem">Submit Rating</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>

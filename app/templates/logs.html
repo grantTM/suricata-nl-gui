@@ -1,6 +1,20 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <script>
+    (function() {
+        const theme = localStorage.getItem("theme");
+        if (theme === "light") {
+            document.documentElement.style.setProperty('--bg', '#fff');
+            document.documentElement.style.setProperty('--text', '#000');
+            document.documentElement.style.setProperty('--input-bg', '#f5f5f5');
+            document.documentElement.style.setProperty('--input-text', '#000');
+            document.documentElement.style.setProperty('--button-bg', '#ccc');
+            document.documentElement.style.setProperty('--button-text', '#000');
+        }
+    })();
+    </script>
+
     <title>Recent Suricata Alerts</title>
     <style id="theme-style">
         :root {
@@ -13,6 +27,19 @@
             --alert-color: red;
         }
 
+        select {
+            background-color: var(--button-bg);
+            color: var(--button-text);
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+        }
+
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -20,6 +47,16 @@
             color: var(--text);
         }
 
+        button {
+            padding: 6px 12px;
+            margin: 2px 0;
+            cursor: pointer;
+        }
+        
+        button[type="submit"][style*="background-color: #a00"] {
+            font-weight: bold;
+        }
+        
         .layout {
             display: flex;
         }
@@ -159,6 +196,7 @@
                 <li><a href="/logs" class="{% if active_page == 'logs' %}active{% endif %}">Alerts</a></li>
                 <li><a href="/translate" class="{% if active_page == 'translate' %}active{% endif %}">Translator</a></li>
                 <li><a href="/rules" class="{% if active_page == 'rules' %}active{% endif %}">Rules</a></li>
+                <li><a href="/feedback" class="{% if active_page == 'feedback' %}active{% endif %}">Feedback</a></li>
             </ul>
 
             <div style="margin-top: 2rem;">
@@ -206,37 +244,52 @@
                 <input type="text" id="searchInput" placeholder="Search alerts..." style="width: 100%; padding: 0.5rem;">
             </div>
 
-            <div class="download-btn">
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <div id="pcap-status" style="margin-top: 10px;"></div>
+                <form method="get" style="margin-bottom: 1rem;">
+                  <label for="sort">Sort by:</label>
+                  <select name="sort" id="sort" onchange="this.form.submit()">
+                    <option value="time" {% if sort == "time" %}selected{% endif %}>Most Recent</option>
+                    <option value="severity" {% if sort == "severity" %}selected{% endif %}>Severity (High to Low)</option>
+                  </select>
+                </form>
+
                 <form action="/download_alerts" method="get">
                     <button type="submit">Download alerts as CSV</button>
                 </form>
+            
+                <form id="pcap-replay-form" method="POST" action="/run-pcap" onsubmit="return runPcapReplay(event);">
+                    <button type="submit" class="btn btn-secondary">
+                        Run Test PCAP
+                    </button>
+                </form>
+
+                <script>
+                    function runPcapReplay(event) {
+                        event.preventDefault();
+
+                        fetch("/run-pcap", {
+                            method: "POST"
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            const statusBox = document.getElementById("pcap-status");
+                            statusBox.innerText = data.message;
+                            statusBox.style.color = data.status === "success" ? "green" : "red";
+                        })
+
+                        return false;
+                    }
+                </script>
+
+                <form method="POST" action="/restart-suricata" style="display: inline;">
+                    <button type="submit" class="btn btn-secondary">
+                        🔁 Restart Suricata
+                    </button>
+                </form>
             </div>
 
-            <form id="pcap-replay-form" method="POST" action="/run-pcap" onsubmit="return runPcapReplay(event);">
-                <button type="submit" class="btn btn-secondary" style="margin-top: 10px;">
-                    Run Test PCAP
-                </button>
-            </form>
-
             <div id="pcap-status" style="margin-top: 10px;"></div>
-
-            <script>
-                function runPcapReplay(event) {
-                    event.preventDefault();
-
-                    fetch("/run-pcap", {
-                        method: "POST"
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        const statusBox = document.getElementById("pcap-status");
-                        statusBox.innerText = data.message;
-                        statusBox.style.color = data.status === "success" ? "green" : "red";
-                    })
-
-                    return false;
-                }
-            </script>
 
             {% for alert in alerts %}
                 <div class="alert-card alert-entry {{ alert.severity | lower }}">

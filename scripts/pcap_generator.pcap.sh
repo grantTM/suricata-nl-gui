@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TARGET="127.0.0.1"
+TARGET=$(hostname -I | awk '{print $1}')
 INTERFACE="lo"
 PCAP_FILE="suricata_rules_test.pcap"
 WEB_DIR="./web_root"
@@ -14,7 +14,7 @@ echo "<html><body>Login Page</body></html>" > $WEB_DIR/login
 
 # Start Python HTTP server in background
 cd $WEB_DIR || exit
-python3 -m http.server 80 >/dev/null 2>&1 &
+python3 -m http.server 80 --bind 0.0.0.0 >/dev/null 2>&1 &
 HTTP_PID=$!
 cd ..
 
